@@ -1,0 +1,31 @@
+import React from 'react';
+import HeaderBlock from '../../components/HeaderBlock';
+import InfoRow from '../../components/InfoRow';
+import Pill from '../../components/Pill';
+import Screen from '../../components/Screen';
+import SectionCard from '../../components/SectionCard';
+import { useAppContext } from '../../context/AppContext';
+
+export default function ProfileScreen() {
+  const { currentRole, currentUser } = useAppContext();
+
+  return (
+    <Screen>
+      <HeaderBlock
+        eyebrow="Account"
+        title="Profile summary"
+        subtitle="This role-aware screen shows the data that should come from the PHP profile endpoints later."
+      />
+
+      <SectionCard title={`${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim()} subtitle={currentUser?.email}>
+        <Pill label={(currentRole || 'guest').toUpperCase()} />
+        <InfoRow label="Mobile Number" value={currentUser?.mobileNumber || '-'} />
+        {currentRole === 'parent' ? <InfoRow label="Address" value={currentUser?.address || '-'} /> : null}
+        {currentRole === 'driver' ? <InfoRow label="License Number" value={currentUser?.licenseNumber || '-'} /> : null}
+        {currentRole === 'driver' ? <InfoRow label="Vehicle" value={`${currentUser?.vehicleModel || '-'} • ${currentUser?.vehiclePlateNumber || '-'}`} /> : null}
+        {currentRole === 'student' ? <InfoRow label="LRN" value={currentUser?.lrn || '-'} /> : null}
+        {currentRole === 'student' ? <InfoRow label="School" value={currentUser?.schoolName || '-'} /> : null}
+      </SectionCard>
+    </Screen>
+  );
+}

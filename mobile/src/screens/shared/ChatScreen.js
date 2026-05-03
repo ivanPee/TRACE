@@ -1,0 +1,104 @@
+import React, { useState } from 'react';
+import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import AppButton from '../../components/AppButton';
+import HeaderBlock from '../../components/HeaderBlock';
+import Screen from '../../components/Screen';
+import SectionCard from '../../components/SectionCard';
+import { useAppContext } from '../../context/AppContext';
+import { colors } from '../../theme/colors';
+
+export default function ChatScreen() {
+  const { currentRole, messages, sendMessage } = useAppContext();
+  const [draft, setDraft] = useState('');
+
+  const visibleMessages = messages.filter(
+    (message) =>
+      message.senderRole === currentRole ||
+      message.receiverRole === currentRole ||
+      (currentRole === 'student' && message.receiverRole === 'parent')
+  );
+
+  return (
+    <Screen scroll={false} style={styles.screen}>
+      <HeaderBlock
+        eyebrow="Messaging"
+        title="Trip coordination chat."
+        subtitle="Parents and drivers can coordinate pickup timing here. Students can use this as a lightweight alert feed in the prototype."
+      />
+
+      <SectionCard title="Conversation">
+        <FlatList
+          data={visibleMessages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={[styles.message, item.senderRole === currentRole ? styles.own : styles.other]}>
+              <Text style={styles.sender}>{item.senderName}</Text>
+              <Text style={styles.body}>{item.text}</Text>
+              <Text style={styles.time}>{item.time}</Text>
+            </View>
+          )}
+          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        />
+      </SectionCard>
+
+      <View style={styles.composer}>
+        <TextInput
+          value={draft}
+          onChangeText={setDraft}
+          placeholder="Type a message"
+          placeholderTextColor="#98a2b3"
+          style={styles.input}
+        />
+        <AppButton
+          label="Send"
+          onPress={() => {
+            sendMessage(draft);
+            setDraft('');
+          }}
+        />
+      </View>
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flexGrow: 1,
+  },
+  message: {
+    padding: 14,
+    borderRadius: 18,
+  },
+  own: {
+    backgroundColor: colors.accentSoft,
+  },
+  other: {
+    backgroundColor: colors.sky,
+  },
+  sender: {
+    color: colors.ink,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  body: {
+    color: colors.ink,
+    lineHeight: 20,
+  },
+  time: {
+    marginTop: 6,
+    color: colors.slate,
+    fontSize: 12,
+  },
+  composer: {
+    marginTop: 8,
+  },
+  input: {
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+});

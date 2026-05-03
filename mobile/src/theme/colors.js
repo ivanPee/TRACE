@@ -1,0 +1,17 @@
+export const colors = {
+  ink: '#143642',
+  deep: '#355070',
+  accent: '#f77f00',
+  accentSoft: '#ffd6a5',
+  mint: '#d9ed92',
+  paper: '#fffdf8',
+  sand: '#f4efe6',
+  sky: '#eef6f7',
+  plum: '#3c096c',
+  slate: '#5c677d',
+  line: '#d9d9d9',
+  white: '#ffffff',
+  success: '#2a9d8f',
+  danger: '#bc4749',
+  warning: '#e9c46a',
+};
