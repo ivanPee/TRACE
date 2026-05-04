@@ -31,7 +31,7 @@ try {
             redirect_to('vehicles.php');
         }
     }
-} catch (Throwable $exception) {
+} catch (Exception $exception) {
     flash('error', $exception->getMessage());
     redirect_to('vehicles.php');
 }
@@ -110,4 +110,3 @@ admin_header('Vehicles', 'vehicles', 'Maintain fleet records, capacity, registra
 <?php endforeach; ?>
 
 <?php admin_footer(); ?>
-

@@ -1,26 +1,29 @@
 <?php
 
-declare(strict_types=1);
-
 session_start();
 
-function e(mixed $value): string
+function e($value)
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
-function admin_config(): array
+function array_get($array, $key, $default = '')
+{
+    return isset($array[$key]) ? $array[$key] : $default;
+}
+
+function admin_config()
 {
     static $config = null;
 
     if ($config === null) {
-        $config = require dirname(__DIR__, 2) . '/backend/config/config.php';
+        $config = require dirname(dirname(__DIR__)) . '/backend/config/config.php';
     }
 
     return $config;
 }
 
-function db(): PDO
+function db()
 {
     static $pdo = null;
 
@@ -45,55 +48,59 @@ function db(): PDO
     return $pdo;
 }
 
-function flash(string $type, string $message): void
+function flash($type, $message)
 {
     $_SESSION['flash'] = ['type' => $type, 'message' => $message];
 }
 
-function pull_flash(): ?array
+function pull_flash()
 {
-    $flash = $_SESSION['flash'] ?? null;
+    $flash = isset($_SESSION['flash']) ? $_SESSION['flash'] : null;
     unset($_SESSION['flash']);
 
     return $flash;
 }
 
-function redirect_to(string $path): never
+function redirect_to($path)
 {
     header('Location: ' . $path);
     exit;
 }
 
-function csrf_token(): string
+function csrf_token()
 {
     if (empty($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        if (function_exists('random_bytes')) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        } else {
+            $_SESSION['csrf_token'] = bin2hex(openssl_random_pseudo_bytes(32));
+        }
     }
 
     return $_SESSION['csrf_token'];
 }
 
-function csrf_field(): string
+function csrf_field()
 {
     return '<input type="hidden" name="csrf_token" value="' . e(csrf_token()) . '">';
 }
 
-function verify_csrf(): void
+function verify_csrf()
 {
-    $token = $_POST['csrf_token'] ?? '';
+    $token = isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '';
 
-    if (!hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+    if (!hash_equals(isset($_SESSION['csrf_token']) ? $_SESSION['csrf_token'] : '', $token)) {
         flash('error', 'Security token expired. Please try again.');
-        redirect_to($_SERVER['HTTP_REFERER'] ?? 'dashboard.php');
+        redirect_to(isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'dashboard.php');
     }
 }
 
-function post_value(string $key, mixed $default = ''): mixed
+function post_value($key, $default = '')
 {
-    return $_POST[$key] ?? $default;
+    return isset($_POST[$key]) ? $_POST[$key] : $default;
 }
 
-function role_id(string $code): int
+function role_id($code)
 {
     $stmt = db()->prepare('SELECT id FROM roles WHERE code = ? LIMIT 1');
     $stmt->execute([$code]);
@@ -106,9 +113,9 @@ function role_id(string $code): int
     return (int) $id;
 }
 
-function create_user(string $roleCode, array $data): int
+function create_user($roleCode, array $data)
 {
-    $password = trim((string) ($data['password'] ?? 'password'));
+    $password = trim((string) array_get($data, 'password', 'password'));
     $stmt = db()->prepare(
         'INSERT INTO users (role_id, first_name, middle_name, last_name, email, mobile_number, password_hash, status, is_verified)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
@@ -116,19 +123,19 @@ function create_user(string $roleCode, array $data): int
     $stmt->execute([
         role_id($roleCode),
         trim((string) $data['first_name']),
-        trim((string) ($data['middle_name'] ?? '')) ?: null,
+        trim((string) array_get($data, 'middle_name', '')) ?: null,
         trim((string) $data['last_name']),
         trim((string) $data['email']),
         trim((string) $data['mobile_number']),
         password_hash($password, PASSWORD_DEFAULT),
-        $data['status'] ?? 'active',
+        array_get($data, 'status', 'active'),
         !empty($data['is_verified']) ? 1 : 0,
     ]);
 
     return (int) db()->lastInsertId();
 }
 
-function update_user(int $userId, array $data): void
+function update_user($userId, array $data)
 {
     $fields = [
         'role_id = ?',
@@ -141,13 +148,13 @@ function update_user(int $userId, array $data): void
         'is_verified = ?',
     ];
     $params = [
-        role_id((string) $data['role_code']),
+        role_id((string) array_get($data, 'role_code')),
         trim((string) $data['first_name']),
-        trim((string) ($data['middle_name'] ?? '')) ?: null,
+        trim((string) array_get($data, 'middle_name', '')) ?: null,
         trim((string) $data['last_name']),
         trim((string) $data['email']),
         trim((string) $data['mobile_number']),
-        $data['status'] ?? 'active',
+        array_get($data, 'status', 'active'),
         !empty($data['is_verified']) ? 1 : 0,
     ];
 
@@ -161,12 +168,21 @@ function update_user(int $userId, array $data): void
     $stmt->execute($params);
 }
 
-function full_name(array $row): string
+function full_name(array $row)
 {
-    return trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+    return trim(array_get($row, 'first_name', '') . ' ' . array_get($row, 'last_name', ''));
 }
 
-function delete_user_tree(int $userId): void
+function text_excerpt($value, $limit = 70)
+{
+    if (strlen($value) <= $limit) {
+        return $value;
+    }
+
+    return substr($value, 0, max(0, $limit - 3)) . '...';
+}
+
+function delete_user_tree($userId)
 {
     $pdo = db();
     $pdo->prepare('DELETE FROM notifications WHERE user_id = ?')->execute([$userId]);
@@ -174,4 +190,3 @@ function delete_user_tree(int $userId): void
     $pdo->prepare('DELETE FROM admin_logs WHERE admin_user_id = ?')->execute([$userId]);
     $pdo->prepare('DELETE FROM users WHERE id = ?')->execute([$userId]);
 }
-

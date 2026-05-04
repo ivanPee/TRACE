@@ -42,7 +42,7 @@ try {
             redirect_to('students.php');
         }
     }
-} catch (Throwable $exception) {
+} catch (Exception $exception) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
@@ -128,4 +128,3 @@ admin_header('Students', 'students', 'Manage student records, parent links, scho
 <?php endforeach; ?>
 
 <?php admin_footer(); ?>
-

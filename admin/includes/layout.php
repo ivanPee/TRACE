@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/bootstrap.php';
 
-function admin_nav_items(string $active): array
+function admin_nav_items($active)
 {
     $items = [
         ['key' => 'dashboard', 'label' => 'Dashboard', 'href' => 'dashboard.php', 'icon' => 'bi-speedometer2'],
@@ -24,7 +24,7 @@ function admin_nav_items(string $active): array
     return $items;
 }
 
-function render_sidebar(string $active): void
+function render_sidebar($active)
 {
     $items = admin_nav_items($active);
     ?>
@@ -55,7 +55,7 @@ function render_sidebar(string $active): void
     <?php
 }
 
-function admin_header(string $title, string $active, string $subtitle = ''): void
+function admin_header($title, $active, $subtitle = '')
 {
     $flash = pull_flash();
     ?>
@@ -120,7 +120,7 @@ function admin_header(string $title, string $active, string $subtitle = ''): voi
     <?php
 }
 
-function admin_footer(): void
+function admin_footer()
 {
     ?>
             </main>
@@ -163,4 +163,3 @@ function admin_footer(): void
     </html>
     <?php
 }
-

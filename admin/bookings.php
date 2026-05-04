@@ -33,7 +33,7 @@ try {
             redirect_to('bookings.php');
         }
     }
-} catch (Throwable $exception) {
+} catch (Exception $exception) {
     flash('error', $exception->getMessage());
     redirect_to('bookings.php');
 }
@@ -74,7 +74,7 @@ admin_header('Bookings', 'bookings', 'Approve trips, assign riders, and update b
                             <td class="fw-semibold"><?= e($booking['scheduled_date']) ?><div class="text-secondary small"><?= e(substr((string) $booking['scheduled_time'], 0, 5)) ?></div></td>
                             <td><?= e(trim($booking['student_first_name'] . ' ' . $booking['student_last_name'])) ?></td>
                             <td><?= e(trim($booking['parent_first_name'] . ' ' . $booking['parent_last_name'])) ?></td>
-                            <td><?= e(trim(($booking['driver_first_name'] ?? '') . ' ' . ($booking['driver_last_name'] ?? '')) ?: 'Unassigned') ?></td>
+                            <td><?= e(trim(array_get($booking, 'driver_first_name', '') . ' ' . array_get($booking, 'driver_last_name', '')) ?: 'Unassigned') ?></td>
                             <td><?= e($booking['trip_type']) ?></td>
                             <td><span class="badge text-bg-primary"><?= e($booking['booking_status']) ?></span></td>
                             <td class="text-end">
@@ -111,4 +111,3 @@ admin_header('Bookings', 'bookings', 'Approve trips, assign riders, and update b
 <?php endforeach; ?>
 
 <?php admin_footer(); ?>
-

@@ -72,7 +72,7 @@ try {
             redirect_to('riders.php');
         }
     }
-} catch (Throwable $exception) {
+} catch (Exception $exception) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
@@ -171,4 +171,3 @@ admin_header('Riders', 'riders', 'Approve rider accounts, manage licenses, and m
 <?php endforeach; ?>
 
 <?php admin_footer(); ?>
-

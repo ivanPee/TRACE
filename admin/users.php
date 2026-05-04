@@ -27,7 +27,7 @@ try {
             redirect_to('users.php');
         }
     }
-} catch (Throwable $exception) {
+} catch (Exception $exception) {
     flash('error', $exception->getMessage());
     redirect_to('users.php');
 }
@@ -142,4 +142,3 @@ admin_header('Users', 'users', 'Create, update, verify, suspend, and delete syst
 <?php endforeach; ?>
 
 <?php admin_footer(); ?>
-

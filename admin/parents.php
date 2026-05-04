@@ -38,7 +38,7 @@ try {
             redirect_to('parents.php');
         }
     }
-} catch (Throwable $exception) {
+} catch (Exception $exception) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
@@ -114,4 +114,3 @@ admin_header('Parents', 'parents', 'Manage guardian profiles, emergency contacts
 <?php endforeach; ?>
 
 <?php admin_footer(); ?>
-
