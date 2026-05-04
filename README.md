@@ -17,3 +17,6 @@ This workspace now contains the initial scaffold for the TRACE capstone system.
 6. Add GPS tracking and map display
 7. Add messaging and notifications
 
+
+$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+
