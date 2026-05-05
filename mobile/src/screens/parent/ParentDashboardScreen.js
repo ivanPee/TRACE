@@ -43,7 +43,8 @@ export default function ParentDashboardScreen({ navigation }) {
 
       <SectionCard title="Parent actions">
         <AppButton label="Manage Students" onPress={() => navigation.navigate('Students')} />
-        <AppButton label="Book a New Ride" variant="secondary" onPress={() => navigation.navigate('BookRide')} />
+        <AppButton label="Open Bookings" variant="secondary" onPress={() => navigation.navigate('Bookings')} />
+        <AppButton label="View Transactions" variant="ghost" onPress={() => navigation.navigate('Transactions')} />
         <AppButton label="Open Notifications" variant="ghost" onPress={() => navigation.navigate('Notifications')} />
         <AppButton label="Chat with Driver" variant="ghost" onPress={() => navigation.navigate('Chat')} />
         <AppButton label="View Profile" variant="ghost" onPress={() => navigation.navigate('Profile')} />

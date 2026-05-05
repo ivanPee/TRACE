@@ -29,7 +29,7 @@ export default function BookRideScreen({ navigation }) {
   };
 
   return (
-    <Screen bottomBar={<AppNavBar navigation={navigation} active="home" />}>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active="bookings" />}>
       <HeaderBlock
         eyebrow="Ride Booking"
         title="Create a student transport booking."

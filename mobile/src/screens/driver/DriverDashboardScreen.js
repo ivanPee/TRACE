@@ -44,7 +44,9 @@ export default function DriverDashboardScreen({ navigation }) {
       </SectionCard>
 
       <SectionCard title="Driver tools">
-        <AppButton label="Track Live Route" onPress={() => navigation.navigate('ActiveRideMap')} />
+        <AppButton label="Open Booking Manager" onPress={() => navigation.navigate('Bookings')} />
+        <AppButton label="Track Live Route" variant="secondary" onPress={() => navigation.navigate('ActiveRideMap')} />
+        <AppButton label="View Transactions" variant="ghost" onPress={() => navigation.navigate('Transactions')} />
         <AppButton label="Open Notifications" variant="ghost" onPress={() => navigation.navigate('Notifications')} />
         <AppButton label="Chat with Parent" variant="ghost" onPress={() => navigation.navigate('Chat')} />
         <AppButton label="View Profile" variant="ghost" onPress={() => navigation.navigate('Profile')} />

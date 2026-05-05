@@ -24,7 +24,7 @@ export default function ChatScreen({ navigation }) {
   );
 
   return (
-    <Screen scroll={false} style={styles.screen} bottomBar={<AppNavBar navigation={navigation} active={currentRole === 'student' ? 'help' : 'chat'} />}>
+    <Screen scroll={false} style={styles.screen} bottomBar={<AppNavBar navigation={navigation} active={currentRole === 'student' ? 'support' : 'bookings'} />}>
       <HeaderBlock
         eyebrow="Messaging"
         title="Trip coordination chat."

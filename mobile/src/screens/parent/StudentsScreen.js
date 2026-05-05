@@ -9,18 +9,19 @@ import SectionCard from '../../components/SectionCard';
 import { useAppContext } from '../../context/AppContext';
 
 export default function StudentsScreen({ navigation }) {
-  const { students } = useAppContext();
+  const { currentRole, students } = useAppContext();
+  const isParent = currentRole === 'parent';
 
   return (
     <Screen bottomBar={<AppNavBar navigation={navigation} active="students" />}>
       <HeaderBlock
-        eyebrow="Student Accounts"
-        title="Linked students under the parent account."
-        subtitle="Each student should have a unique LRN and route information before ride booking."
+        eyebrow={isParent ? 'Student Accounts' : 'Assigned Students'}
+        title={isParent ? 'Linked students under the parent account.' : 'Children assigned to this driver route.'}
+        subtitle={isParent ? 'Each student should have a unique LRN and route information before ride booking.' : 'Drivers can review route details here, while profile ownership stays with the parents.'}
       />
 
       {students.map((student) => (
-        <SectionCard key={student.id} title={student.name} subtitle={`${student.schoolName} • ${student.gradeLevel}`}>
+        <SectionCard key={student.id} title={student.name} subtitle={`${student.schoolName} - ${student.gradeLevel}`}>
           <Pill label={`LRN: ${student.lrn}`} />
           <Text>Pickup: {student.pickupAddress}</Text>
           <Text>Drop-off: {student.dropoffAddress}</Text>
@@ -28,7 +29,7 @@ export default function StudentsScreen({ navigation }) {
         </SectionCard>
       ))}
 
-      <AppButton label="Add Student Account" onPress={() => navigation.navigate('AddStudent')} />
+      {isParent ? <AppButton label="Add Student Account" onPress={() => navigation.navigate('AddStudent')} /> : null}
     </Screen>
   );
 }

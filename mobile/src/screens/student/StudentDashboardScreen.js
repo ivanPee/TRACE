@@ -35,7 +35,6 @@ export default function StudentDashboardScreen({ navigation }) {
       <SectionCard title="Student actions">
         <AppButton label="Open Notifications" variant="ghost" onPress={() => navigation.navigate('Notifications')} />
         <AppButton label="Emergency Alert" variant="secondary" onPress={() => navigation.navigate('Chat')} />
-        <AppButton label="View Profile" variant="ghost" onPress={() => navigation.navigate('Profile')} />
         <AppButton
           label="Logout"
           variant="ghost"

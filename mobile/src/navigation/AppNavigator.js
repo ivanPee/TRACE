@@ -17,7 +17,9 @@ import DriverTripsScreen from '../screens/driver/DriverTripsScreen';
 import StudentDashboardScreen from '../screens/student/StudentDashboardScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
 import ChatScreen from '../screens/shared/ChatScreen';
+import BookingsScreen from '../screens/shared/BookingsScreen';
 import ProfileScreen from '../screens/shared/ProfileScreen';
+import TransactionsScreen from '../screens/shared/TransactionsScreen';
 import ActiveRideMapScreen from '../screens/tracking/ActiveRideMapScreen';
 
 const Stack = createNativeStackNavigator();
@@ -38,6 +40,7 @@ export default function AppNavigator() {
         },
         headerStyle: { backgroundColor: colors.paper },
         contentStyle: { backgroundColor: colors.paper },
+        animation: 'slide_from_right',
       }}
     >
       <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
@@ -50,12 +53,14 @@ export default function AppNavigator() {
       <Stack.Screen name="Students" component={StudentsScreen} options={{ title: 'Students' }} />
       <Stack.Screen name="AddStudent" component={AddStudentScreen} options={{ title: 'Add Student' }} />
       <Stack.Screen name="BookRide" component={BookRideScreen} options={{ title: 'Book Ride' }} />
+      <Stack.Screen name="Bookings" component={BookingsScreen} options={{ title: 'Bookings' }} />
       <Stack.Screen name="DriverDashboard" component={DriverDashboardScreen} options={{ title: 'Driver Home' }} />
       <Stack.Screen name="DriverTrips" component={DriverTripsScreen} options={{ title: 'Driver Trips' }} />
       <Stack.Screen name="StudentDashboard" component={StudentDashboardScreen} options={{ title: 'Student Home' }} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: currentRole === 'driver' ? 'Parent Chat' : 'Driver Chat' }} />
       <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <Stack.Screen name="Transactions" component={TransactionsScreen} options={{ title: 'Transactions' }} />
       <Stack.Screen name="ActiveRideMap" component={ActiveRideMapScreen} options={{ title: 'Live Tracking' }} />
     </Stack.Navigator>
   );

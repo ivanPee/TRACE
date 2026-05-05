@@ -12,7 +12,7 @@ export default function NotificationsScreen({ navigation }) {
   const visibleNotifications = notifications.filter((item) => item.role === currentRole);
 
   return (
-    <Screen bottomBar={<AppNavBar navigation={navigation} active="alerts" />}>
+    <Screen bottomBar={<AppNavBar navigation={navigation} />}>
       <HeaderBlock
         eyebrow="Alerts"
         title="Recent system notifications."

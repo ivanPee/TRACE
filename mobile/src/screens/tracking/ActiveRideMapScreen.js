@@ -45,7 +45,7 @@ export default function ActiveRideMapScreen({ navigation }) {
   }, [ride.location]);
 
   return (
-    <Screen bottomBar={<AppNavBar navigation={navigation} active={currentRole === 'student' ? 'map' : currentRole === 'driver' ? 'trips' : 'home'} />}>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active={currentRole === 'student' ? 'ride' : 'bookings'} />}>
       <HeaderBlock
         eyebrow="Live Tracking"
         title={currentRole === 'driver' ? 'Driver route simulator' : 'Real-time route view'}

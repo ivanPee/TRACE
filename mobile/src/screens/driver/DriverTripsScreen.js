@@ -14,7 +14,7 @@ export default function DriverTripsScreen({ navigation }) {
   const ride = rides[0];
 
   return (
-    <Screen bottomBar={<AppNavBar navigation={navigation} active="trips" />}>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active="bookings" />}>
       <HeaderBlock
         eyebrow="Trip Controls"
         title="Manage the active student ride."
