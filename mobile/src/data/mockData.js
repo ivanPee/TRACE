@@ -5,18 +5,23 @@ export const roles = [
 ];
 
 export const driverLocation = {
-  latitude: 10.6765,
-  longitude: 122.9509,
+  latitude: 10.6665,
+  longitude: 122.9422,
   latitudeDelta: 0.03,
   longitudeDelta: 0.03,
 };
 
 export const routePoints = [
   { latitude: 10.6665, longitude: 122.9422 },
+  { latitude: 10.6684, longitude: 122.9447 },
   { latitude: 10.6702, longitude: 122.9475 },
+  { latitude: 10.6732, longitude: 122.9492 },
   { latitude: 10.6765, longitude: 122.9509 },
+  { latitude: 10.6798, longitude: 122.9538 },
   { latitude: 10.6828, longitude: 122.9572 },
 ];
+
+export const rideStatusSteps = ['Driver Arriving', 'Arrived', 'Picked Up', 'In Transit', 'Dropped Off', 'Completed'];
 
 export const initialState = {
   currentRole: null,
@@ -80,7 +85,6 @@ export const initialState = {
       scheduledTime: '07:00 AM',
       tripType: 'Round Trip',
       status: 'assigned',
-      fare: 'PHP 120.00',
       driverName: 'Marco Ramos',
     },
   ],
@@ -91,12 +95,15 @@ export const initialState = {
       studentName: 'Lia Villanueva',
       parentName: 'Angela Villanueva',
       driverName: 'Marco Ramos',
-      vehicle: 'Toyota Hiace • ABC-1234',
+      vehicle: 'Toyota Hiace - ABC-1234',
       status: 'Driver Arriving',
       etaMinutes: 8,
+      distanceKm: 3.4,
       pickupTime: '06:55 AM',
       dropoffTime: '07:30 AM',
-      progress: 0.45,
+      progress: 0,
+      currentPointIndex: 0,
+      isTracking: false,
       location: driverLocation,
       routePoints,
     },
@@ -106,7 +113,7 @@ export const initialState = {
       id: 'notif-1',
       role: 'parent',
       title: 'Driver is on the way',
-      body: 'Marco Ramos is 8 minutes away from Lia’s pickup point.',
+      body: "Marco Ramos is 8 minutes away from Lia's pickup point.",
       time: '5 mins ago',
     },
     {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import FormInput from '../../components/FormInput';
 import HeaderBlock from '../../components/HeaderBlock';
@@ -37,7 +38,7 @@ export default function AddStudentScreen({ navigation }) {
   };
 
   return (
-    <Screen>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active="students" />}>
       <HeaderBlock
         eyebrow="New Student"
         title="Create the student account from the parent side."

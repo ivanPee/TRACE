@@ -1,17 +1,18 @@
 import React from 'react';
 import { Text } from 'react-native';
+import AppNavBar from '../../components/AppNavBar';
 import HeaderBlock from '../../components/HeaderBlock';
 import Pill from '../../components/Pill';
 import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
 import { useAppContext } from '../../context/AppContext';
 
-export default function NotificationsScreen() {
+export default function NotificationsScreen({ navigation }) {
   const { currentRole, notifications } = useAppContext();
   const visibleNotifications = notifications.filter((item) => item.role === currentRole);
 
   return (
-    <Screen>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active="alerts" />}>
       <HeaderBlock
         eyebrow="Alerts"
         title="Recent system notifications."

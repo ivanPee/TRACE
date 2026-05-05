@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAppContext } from '../context/AppContext';
+import { colors } from '../theme/colors';
 import SplashScreen from '../screens/common/SplashScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -29,8 +30,14 @@ export default function AppNavigator() {
       initialRouteName="Splash"
       screenOptions={{
         headerShadowVisible: false,
-        headerStyle: { backgroundColor: '#fffdf8' },
-        contentStyle: { backgroundColor: '#fffdf8' },
+        headerBackTitleVisible: false,
+        headerTintColor: colors.ink,
+        headerTitleStyle: {
+          color: colors.ink,
+          fontWeight: '800',
+        },
+        headerStyle: { backgroundColor: colors.paper },
+        contentStyle: { backgroundColor: colors.paper },
       }}
     >
       <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />

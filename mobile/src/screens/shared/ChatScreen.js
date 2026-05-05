@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import HeaderBlock from '../../components/HeaderBlock';
 import Screen from '../../components/Screen';
@@ -7,7 +8,11 @@ import SectionCard from '../../components/SectionCard';
 import { useAppContext } from '../../context/AppContext';
 import { colors } from '../../theme/colors';
 
-export default function ChatScreen() {
+function MessageSeparator() {
+  return <View style={styles.messageSeparator} />;
+}
+
+export default function ChatScreen({ navigation }) {
   const { currentRole, messages, sendMessage } = useAppContext();
   const [draft, setDraft] = useState('');
 
@@ -19,7 +24,7 @@ export default function ChatScreen() {
   );
 
   return (
-    <Screen scroll={false} style={styles.screen}>
+    <Screen scroll={false} style={styles.screen} bottomBar={<AppNavBar navigation={navigation} active={currentRole === 'student' ? 'help' : 'chat'} />}>
       <HeaderBlock
         eyebrow="Messaging"
         title="Trip coordination chat."
@@ -37,7 +42,7 @@ export default function ChatScreen() {
               <Text style={styles.time}>{item.time}</Text>
             </View>
           )}
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+          ItemSeparatorComponent={MessageSeparator}
         />
       </SectionCard>
 
@@ -91,6 +96,9 @@ const styles = StyleSheet.create({
   },
   composer: {
     marginTop: 8,
+  },
+  messageSeparator: {
+    height: 10,
   },
   input: {
     backgroundColor: colors.white,

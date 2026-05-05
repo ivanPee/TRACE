@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text } from 'react-native';
+import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import HeaderBlock from '../../components/HeaderBlock';
 import Pill from '../../components/Pill';
@@ -11,7 +12,7 @@ export default function StudentsScreen({ navigation }) {
   const { students } = useAppContext();
 
   return (
-    <Screen>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active="students" />}>
       <HeaderBlock
         eyebrow="Student Accounts"
         title="Linked students under the parent account."

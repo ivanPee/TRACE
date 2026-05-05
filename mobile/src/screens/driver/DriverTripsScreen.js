@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text } from 'react-native';
+import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import HeaderBlock from '../../components/HeaderBlock';
 import InfoRow from '../../components/InfoRow';
@@ -7,15 +7,14 @@ import Pill from '../../components/Pill';
 import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
 import { useAppContext } from '../../context/AppContext';
-
-const statuses = ['Driver Arriving', 'Arrived', 'Picked Up', 'In Transit', 'Dropped Off', 'Completed'];
+import { rideStatusSteps } from '../../data/mockData';
 
 export default function DriverTripsScreen({ navigation }) {
-  const { rides, updateRideStatus } = useAppContext();
+  const { rides, updateRideStatus, setTrackingActive, advanceRideSimulation, resetRideSimulation } = useAppContext();
   const ride = rides[0];
 
   return (
-    <Screen>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active="trips" />}>
       <HeaderBlock
         eyebrow="Trip Controls"
         title="Manage the active student ride."
@@ -31,9 +30,15 @@ export default function DriverTripsScreen({ navigation }) {
       </SectionCard>
 
       <SectionCard title="Update trip status">
-        {statuses.map((status) => (
+        {rideStatusSteps.map((status) => (
           <AppButton key={status} label={status} variant={status === 'Completed' ? 'secondary' : 'ghost'} onPress={() => updateRideStatus(status)} />
         ))}
+      </SectionCard>
+
+      <SectionCard title="GPS simulator">
+        <AppButton label={ride.isTracking ? 'Pause Live Sharing' : 'Start Live Sharing'} onPress={() => setTrackingActive(!ride.isTracking)} />
+        <AppButton label="Push Next Location" variant="secondary" onPress={advanceRideSimulation} />
+        <AppButton label="Reset Route" variant="ghost" onPress={resetRideSimulation} />
       </SectionCard>
 
       <AppButton label="Open Live Map" onPress={() => navigation.navigate('ActiveRideMap')} />

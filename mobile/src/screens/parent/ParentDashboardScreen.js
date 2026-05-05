@@ -1,19 +1,23 @@
 import React from 'react';
 import { Text } from 'react-native';
+import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import HeaderBlock from '../../components/HeaderBlock';
 import Pill from '../../components/Pill';
+import RoleSimulator from '../../components/RoleSimulator';
 import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
 import StatGrid from '../../components/StatGrid';
 import { useAppContext } from '../../context/AppContext';
 
 export default function ParentDashboardScreen({ navigation }) {
-  const { currentUser, students, bookings, rides, logout } = useAppContext();
+  const { currentRole, currentUser, students, bookings, rides, logout, loginAsRole } = useAppContext();
   const activeRide = rides[0];
 
   return (
-    <Screen>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active="home" />}>
+      <RoleSimulator currentRole={currentRole} loginAsRole={loginAsRole} navigation={navigation} />
+
       <HeaderBlock
         eyebrow="Parent Panel"
         title={`Welcome, ${currentUser?.firstName || 'Parent'}`}
@@ -32,7 +36,8 @@ export default function ParentDashboardScreen({ navigation }) {
       <SectionCard title="Current ride" subtitle="Quick view of the most recent assigned trip." tone="soft">
         <Pill label={activeRide.status} tone="warning" />
         <Text>{activeRide.studentName} is assigned to {activeRide.driverName}.</Text>
-        <Text>ETA: {activeRide.etaMinutes} minutes • Vehicle: {activeRide.vehicle}</Text>
+        <Text>ETA: {activeRide.etaMinutes} minutes - Vehicle: {activeRide.vehicle}</Text>
+        <Text>Distance left: {activeRide.distanceKm} km</Text>
         <AppButton label="Track Live Ride" onPress={() => navigation.navigate('ActiveRideMap')} />
       </SectionCard>
 
