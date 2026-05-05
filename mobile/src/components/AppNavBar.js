@@ -5,8 +5,6 @@ import { useAppContext } from '../context/AppContext';
 import { shellTabsByRole } from '../navigation/appShellConfig';
 import { colors } from '../theme/colors';
 
-FontAwesome5.loadFont();
-
 const iconByKey = {
   home: 'home',
   students: 'users',
