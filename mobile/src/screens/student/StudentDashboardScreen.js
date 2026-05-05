@@ -8,9 +8,11 @@ import RoleSimulator from '../../components/RoleSimulator';
 import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
 import { useAppContext } from '../../context/AppContext';
+import { useAppShell } from '../../navigation/AppShellContext';
 
 export default function StudentDashboardScreen({ navigation }) {
   const { currentRole, currentUser, rides, logout, loginAsRole } = useAppContext();
+  const { exitToWelcome } = useAppShell();
   const ride = rides[0];
 
   return (
@@ -40,7 +42,7 @@ export default function StudentDashboardScreen({ navigation }) {
           variant="ghost"
           onPress={() => {
             logout();
-            navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+            exitToWelcome();
           }}
         />
       </SectionCard>

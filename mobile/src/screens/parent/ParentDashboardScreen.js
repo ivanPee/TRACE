@@ -9,9 +9,11 @@ import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
 import StatGrid from '../../components/StatGrid';
 import { useAppContext } from '../../context/AppContext';
+import { useAppShell } from '../../navigation/AppShellContext';
 
 export default function ParentDashboardScreen({ navigation }) {
   const { currentRole, currentUser, students, bookings, rides, logout, loginAsRole } = useAppContext();
+  const { exitToWelcome } = useAppShell();
   const activeRide = rides[0];
 
   return (
@@ -53,7 +55,7 @@ export default function ParentDashboardScreen({ navigation }) {
           variant="ghost"
           onPress={() => {
             logout();
-            navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+            exitToWelcome();
           }}
         />
       </SectionCard>

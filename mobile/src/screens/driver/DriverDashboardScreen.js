@@ -9,9 +9,11 @@ import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
 import StatGrid from '../../components/StatGrid';
 import { useAppContext } from '../../context/AppContext';
+import { useAppShell } from '../../navigation/AppShellContext';
 
 export default function DriverDashboardScreen({ navigation }) {
   const { currentRole, currentUser, rides, bookings, logout, loginAsRole } = useAppContext();
+  const { exitToWelcome } = useAppShell();
   const ride = rides[0];
 
   return (
@@ -55,7 +57,7 @@ export default function DriverDashboardScreen({ navigation }) {
           variant="ghost"
           onPress={() => {
             logout();
-            navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+            exitToWelcome();
           }}
         />
       </SectionCard>

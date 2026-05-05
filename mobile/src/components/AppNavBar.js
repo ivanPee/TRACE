@@ -1,33 +1,12 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useAppContext } from '../context/AppContext';
+import { shellTabsByRole } from '../navigation/appShellConfig';
 import { colors } from '../theme/colors';
 
-const routeByRole = {
-  parent: [
-    { key: 'home', route: 'ParentDashboard', icon: 'home', label: 'Home' },
-    { key: 'students', route: 'Students', icon: 'students', label: 'Students' },
-    { key: 'bookings', route: 'Bookings', icon: 'bookings', label: 'Bookings', featured: true },
-    { key: 'transactions', route: 'Transactions', icon: 'transactions', label: 'Transactions' },
-    { key: 'profile', route: 'Profile', icon: 'profile', label: 'Profile' },
-  ],
-  driver: [
-    { key: 'home', route: 'DriverDashboard', icon: 'home', label: 'Home' },
-    { key: 'students', route: 'Students', icon: 'students', label: 'Students' },
-    { key: 'bookings', route: 'Bookings', icon: 'bookings', label: 'Bookings', featured: true },
-    { key: 'transactions', route: 'Transactions', icon: 'transactions', label: 'Transactions' },
-    { key: 'profile', route: 'Profile', icon: 'profile', label: 'Profile' },
-  ],
-  student: [
-    { key: 'home', route: 'StudentDashboard', icon: 'home', label: 'Home' },
-    { key: 'ride', route: 'ActiveRideMap', icon: 'ride', label: 'Ride', featured: true },
-    { key: 'support', route: 'Chat', icon: 'support', label: 'Support' },
-  ],
-};
-
-export default function AppNavBar({ navigation, active }) {
+export default function AppNavBar({ navigation, active, onTabPress }) {
   const { currentRole } = useAppContext();
-  const items = routeByRole[currentRole] || routeByRole.parent;
+  const items = shellTabsByRole[currentRole] || shellTabsByRole.parent;
 
   return (
     <View style={styles.shell}>
@@ -41,17 +20,18 @@ export default function AppNavBar({ navigation, active }) {
               accessibilityRole="button"
               accessibilityLabel={item.label}
               accessibilityState={{ selected: isActive }}
-              onPress={() => navigation.navigate(item.route)}
-              style={({ pressed }) => [
-                styles.item,
-                item.featured && styles.featuredItem,
-                isActive && styles.activeItem,
-                item.featured && isActive && styles.activeFeaturedItem,
-                pressed && styles.pressed,
-              ]}
+              onPress={() => {
+                if (onTabPress) {
+                  onTabPress(item.route);
+                  return;
+                }
+
+                navigation.navigate(item.route);
+              }}
+              style={({ pressed }) => [styles.item, isActive && styles.activeItem, pressed && styles.pressed]}
             >
-              <View style={[styles.iconWrap, item.featured && styles.featuredIconWrap, isActive && styles.activeIconWrap, item.featured && isActive && styles.activeFeaturedIconWrap]}>
-                <NavIcon icon={item.icon} active={isActive} featured={item.featured} />
+              <View style={[styles.iconWrap, isActive && styles.activeIconWrap]}>
+                <NavIcon icon={item.icon} active={isActive} />
               </View>
             </Pressable>
           );
@@ -61,8 +41,8 @@ export default function AppNavBar({ navigation, active }) {
   );
 }
 
-function NavIcon({ icon, active, featured }) {
-  const tint = featured ? (active ? colors.white : colors.deep) : active ? colors.accent : colors.slate;
+function NavIcon({ icon, active }) {
+  const tint = active ? colors.accent : '#c7d0db';
 
   if (icon === 'home') {
     return (
@@ -139,36 +119,30 @@ function NavIcon({ icon, active, featured }) {
 
 const styles = StyleSheet.create({
   shell: {
-    backgroundColor: colors.paper,
-    paddingHorizontal: 18,
-    paddingTop: 10,
-    paddingBottom: 14,
+    backgroundColor: colors.deep,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: 10,
+    paddingTop: 6,
+    paddingBottom: 6,
   },
   bar: {
-    minHeight: 74,
-    borderRadius: 26,
+    minHeight: 64,
     backgroundColor: colors.deep,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    shadowColor: colors.ink,
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+    paddingHorizontal: 4,
   },
   item: {
     flex: 1,
-    minHeight: 58,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 18,
-    paddingHorizontal: 6,
+    borderRadius: 14,
   },
-  featuredItem: {
-    marginTop: -26,
+  activeItem: {
+    backgroundColor: 'rgba(255,255,255,0.07)',
   },
   pressed: {
     opacity: 0.82,
@@ -179,33 +153,9 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
-  },
-  featuredIconWrap: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: colors.paper,
-    borderWidth: 3,
-    borderColor: colors.deep,
-    shadowColor: colors.ink,
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  activeItem: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   activeIconWrap: {
-    backgroundColor: colors.accentSoft,
-  },
-  activeFeaturedItem: {
-    backgroundColor: 'transparent',
-  },
-  activeFeaturedIconWrap: {
-    backgroundColor: colors.accent,
-    borderColor: colors.paper,
+    backgroundColor: 'rgba(247,127,0,0.14)',
   },
   iconBox: {
     width: 26,
@@ -322,7 +272,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.paper,
   },
   walletLatchDot: {
     width: 2,

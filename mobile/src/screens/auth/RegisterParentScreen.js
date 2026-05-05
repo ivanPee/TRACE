@@ -28,7 +28,7 @@ export default function RegisterParentScreen({ navigation }) {
     });
     navigation.reset({
       index: 0,
-      routes: [{ name: 'ParentDashboard' }],
+      routes: [{ name: 'MainApp' }],
     });
   };
 

@@ -7,9 +7,11 @@ import Pill from '../../components/Pill';
 import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
 import { useAppContext } from '../../context/AppContext';
+import { useAppShell } from '../../navigation/AppShellContext';
 
 export default function ProfileScreen({ navigation }) {
   const { currentRole, currentUser, logout } = useAppContext();
+  const { exitToWelcome } = useAppShell();
 
   return (
     <Screen bottomBar={<AppNavBar navigation={navigation} active="profile" />}>
@@ -24,7 +26,7 @@ export default function ProfileScreen({ navigation }) {
         <InfoRow label="Mobile Number" value={currentUser?.mobileNumber || '-'} />
         {currentRole === 'parent' ? <InfoRow label="Address" value={currentUser?.address || '-'} /> : null}
         {currentRole === 'driver' ? <InfoRow label="License Number" value={currentUser?.licenseNumber || '-'} /> : null}
-        {currentRole === 'driver' ? <InfoRow label="Vehicle" value={`${currentUser?.vehicleModel || '-'} • ${currentUser?.vehiclePlateNumber || '-'}`} /> : null}
+        {currentRole === 'driver' ? <InfoRow label="Vehicle" value={`${currentUser?.vehicleModel || '-'} - ${currentUser?.vehiclePlateNumber || '-'}`} /> : null}
         {currentRole === 'student' ? <InfoRow label="LRN" value={currentUser?.lrn || '-'} /> : null}
         {currentRole === 'student' ? <InfoRow label="School" value={currentUser?.schoolName || '-'} /> : null}
         <AppButton
@@ -32,7 +34,7 @@ export default function ProfileScreen({ navigation }) {
           variant="ghost"
           onPress={() => {
             logout();
-            navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+            exitToWelcome();
           }}
         />
       </SectionCard>

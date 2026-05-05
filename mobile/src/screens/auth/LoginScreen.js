@@ -11,18 +11,7 @@ export default function LoginScreen({ navigation }) {
 
   const handleDemoLogin = (role) => {
     loginAsRole(role);
-
-    if (role === 'parent') {
-      navigation.replace('ParentDashboard');
-      return;
-    }
-
-    if (role === 'driver') {
-      navigation.replace('DriverDashboard');
-      return;
-    }
-
-    navigation.replace('StudentDashboard');
+    navigation.replace('MainApp');
   };
 
   return (

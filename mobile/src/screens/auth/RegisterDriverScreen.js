@@ -32,7 +32,7 @@ export default function RegisterDriverScreen({ navigation }) {
     });
     navigation.reset({
       index: 0,
-      routes: [{ name: 'DriverDashboard' }],
+      routes: [{ name: 'MainApp' }],
     });
   };
 

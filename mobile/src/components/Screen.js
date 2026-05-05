@@ -1,8 +1,11 @@
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAppShell } from '../navigation/AppShellContext';
 import { colors } from '../theme/colors';
 
 export default function Screen({ children, scroll = true, style, bottomBar }) {
+  const { isInAppShell } = useAppShell();
   const content = scroll ? (
     <ScrollView contentContainerStyle={[styles.content, style]} showsVerticalScrollIndicator={false}>
       {children}
@@ -12,10 +15,10 @@ export default function Screen({ children, scroll = true, style, bottomBar }) {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={isInAppShell ? ['top', 'left', 'right'] : ['top', 'bottom', 'left', 'right']} style={styles.safeArea}>
       <View style={styles.container}>
         {content}
-        {bottomBar ? <View>{bottomBar}</View> : null}
+        {!isInAppShell && bottomBar ? <View>{bottomBar}</View> : null}
       </View>
     </SafeAreaView>
   );

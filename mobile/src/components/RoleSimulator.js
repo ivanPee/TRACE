@@ -1,30 +1,33 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import AppButton from './AppButton';
+import { useAppShell } from '../navigation/AppShellContext';
 import { colors } from '../theme/colors';
 
-const roleRoutes = {
-  parent: 'ParentDashboard',
-  driver: 'DriverDashboard',
-  student: 'StudentDashboard',
-};
+const roles = ['parent', 'driver', 'student'];
 
-export default function RoleSimulator({ currentRole, loginAsRole, navigation }) {
-  const switchRole = (role) => {
+export default function RoleSimulator({ currentRole, loginAsRole }) {
+  const { switchRole } = useAppShell();
+
+  const handleSwitchRole = (role) => {
+    if (switchRole) {
+      switchRole(role);
+      return;
+    }
+
     loginAsRole(role);
-    navigation.replace(roleRoutes[role]);
   };
 
   return (
     <View style={styles.wrap}>
       <Text style={styles.label}>Static simulator</Text>
       <View style={styles.row}>
-        {Object.keys(roleRoutes).map((role) => (
+        {roles.map((role) => (
           <View key={role} style={styles.item}>
             <AppButton
               label={role.charAt(0).toUpperCase() + role.slice(1)}
               variant={role === currentRole ? 'secondary' : 'ghost'}
-              onPress={() => switchRole(role)}
+              onPress={() => handleSwitchRole(role)}
             />
           </View>
         ))}
