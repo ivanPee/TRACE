@@ -7,9 +7,9 @@ import { colors } from '../theme/colors';
 
 const iconByKey = {
   home: 'home',
-  students: 'users',
+  students: 'child',
   bookings: 'comment-dots',
-  transactions: 'wallet',
+  transactions: 'history',
   profile: 'user-circle',
   ride: 'route',
   support: 'life-ring',
