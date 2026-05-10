@@ -14,17 +14,19 @@ export default function RegisterParentScreen({ navigation }) {
     email: '',
     mobileNumber: '',
     address: '',
+    password: '',
   });
 
   const updateField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
-  const handleSubmit = () => {
-    registerParent({
-      firstName: form.firstName || 'New',
-      lastName: form.lastName || 'Parent',
-      email: form.email || 'newparent@trace.test',
-      mobileNumber: form.mobileNumber || '09170001111',
-      address: form.address || 'Bacolod City',
+  const handleSubmit = async () => {
+    await registerParent({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      mobileNumber: form.mobileNumber,
+      address: form.address,
+      password: form.password,
     });
     navigation.reset({
       index: 0,
@@ -44,6 +46,7 @@ export default function RegisterParentScreen({ navigation }) {
         <FormInput label="Last Name" value={form.lastName} onChangeText={(value) => updateField('lastName', value)} placeholder="Villanueva" />
         <FormInput label="Email" value={form.email} onChangeText={(value) => updateField('email', value)} placeholder="parent@example.com" />
         <FormInput label="Mobile Number" value={form.mobileNumber} onChangeText={(value) => updateField('mobileNumber', value)} placeholder="09171234567" />
+        <FormInput label="Password" value={form.password} onChangeText={(value) => updateField('password', value)} placeholder="Password" secureTextEntry />
         <FormInput label="Address" value={form.address} onChangeText={(value) => updateField('address', value)} placeholder="Pickup/home address" multiline />
         <AppButton label="Create Parent Account" onPress={handleSubmit} />
       </SectionCard>

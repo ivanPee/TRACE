@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CommonActions, NavigationContainer, StackActions, useNavigationContainerRef, useNavigation } from '@react-navigation/native';
+import { NavigationContainer, StackActions, useNavigationContainerRef, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyleSheet, View } from 'react-native';
@@ -27,30 +27,13 @@ const ShellStack = createNativeStackNavigator();
 export default function AppShell() {
   const rootNavigation = useNavigation();
   const appNavigationRef = useNavigationContainerRef();
-  const { currentRole, loginAsRole } = useAppContext();
+  const { currentRole } = useAppContext();
   const initialRouteName = getShellInitialRoute(currentRole);
   const [activeRouteName, setActiveRouteName] = useState(initialRouteName);
-  const [shellKey, setShellKey] = useState(0);
   const activeKey = getActiveNavKey(currentRole, activeRouteName);
 
   const exitToWelcome = () => {
     rootNavigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
-  };
-
-  const switchRole = (role) => {
-    loginAsRole(role);
-    const nextRoute = getShellInitialRoute(role);
-    setActiveRouteName(nextRoute);
-    setShellKey((current) => current + 1);
-
-    if (appNavigationRef.isReady()) {
-      appNavigationRef.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: nextRoute }],
-        })
-      );
-    }
   };
 
   const syncRouteName = () => {
@@ -69,13 +52,13 @@ export default function AppShell() {
   };
 
   return (
-    <AppShellContext.Provider value={{ isInAppShell: true, exitToWelcome, switchRole }}>
+    <AppShellContext.Provider value={{ isInAppShell: true, exitToWelcome }}>
       <SafeAreaView edges={['bottom']} style={styles.safeArea}>
         <View style={styles.container}>
           <View style={styles.content}>
             <NavigationContainer independent ref={appNavigationRef} onReady={syncRouteName} onStateChange={syncRouteName}>
               <ShellStack.Navigator
-                key={`${currentRole || 'guest'}-${shellKey}`}
+                key={currentRole || 'guest'}
                 initialRouteName={initialRouteName}
                 screenOptions={{
                   headerShadowVisible: false,

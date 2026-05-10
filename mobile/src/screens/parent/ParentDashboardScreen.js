@@ -4,7 +4,6 @@ import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import HeaderBlock from '../../components/HeaderBlock';
 import Pill from '../../components/Pill';
-import RoleSimulator from '../../components/RoleSimulator';
 import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
 import StatGrid from '../../components/StatGrid';
@@ -12,14 +11,12 @@ import { useAppContext } from '../../context/AppContext';
 import { useAppShell } from '../../navigation/AppShellContext';
 
 export default function ParentDashboardScreen({ navigation }) {
-  const { currentRole, currentUser, students, bookings, rides, logout, loginAsRole } = useAppContext();
+  const { currentUser, students, bookings, rides, notifications, logout } = useAppContext();
   const { exitToWelcome } = useAppShell();
   const activeRide = rides[0];
 
   return (
     <Screen bottomBar={<AppNavBar navigation={navigation} active="home" />}>
-      <RoleSimulator currentRole={currentRole} loginAsRole={loginAsRole} navigation={navigation} />
-
       <HeaderBlock
         eyebrow="Parent Panel"
         title={`Welcome, ${currentUser?.firstName || 'Parent'}`}
@@ -31,16 +28,22 @@ export default function ParentDashboardScreen({ navigation }) {
           { label: 'Students', value: students.length },
           { label: 'Bookings', value: bookings.length },
           { label: 'Active Rides', value: rides.length },
-          { label: 'Unread Alerts', value: 2 },
+          { label: 'Unread Alerts', value: notifications.length },
         ]}
       />
 
       <SectionCard title="Current ride" subtitle="Quick view of the most recent assigned trip." tone="soft">
-        <Pill label={activeRide.status} tone="warning" />
-        <Text>{activeRide.studentName} is assigned to {activeRide.driverName}.</Text>
-        <Text>ETA: {activeRide.etaMinutes} minutes - Vehicle: {activeRide.vehicle}</Text>
-        <Text>Distance left: {activeRide.distanceKm} km</Text>
-        <AppButton label="Track Live Ride" onPress={() => navigation.navigate('ActiveRideMap')} />
+        {activeRide ? (
+          <>
+            <Pill label={activeRide.status} tone="warning" />
+            <Text>{activeRide.studentName} is assigned to {activeRide.driverName}.</Text>
+            <Text>ETA: {activeRide.etaMinutes} minutes - Vehicle: {activeRide.vehicle}</Text>
+            <Text>Distance left: {activeRide.distanceKm} km</Text>
+            <AppButton label="Track Live Ride" onPress={() => navigation.navigate('ActiveRideMap')} />
+          </>
+        ) : (
+          <Text>No active ride yet. Register a student, choose a driver, then create a booking.</Text>
+        )}
       </SectionCard>
 
       <SectionCard title="Parent actions">

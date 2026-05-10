@@ -57,6 +57,7 @@ function render_sidebar($active)
 
 function admin_header($title, $active, $subtitle = '')
 {
+    $admin = require_admin();
     $flash = pull_flash();
     ?>
     <!doctype html>
@@ -103,11 +104,11 @@ function admin_header($title, $active, $subtitle = '')
                         <i class="bi bi-bell"></i>
                     </a>
                     <div class="dropdown">
-                        <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Admin</button>
+                        <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><?= e(full_name($admin)) ?: 'Admin' ?></button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                             <li><a class="dropdown-item" href="reports.php">Activity logs</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="login.php">Sign out</a></li>
+                            <li><a class="dropdown-item text-danger" href="logout.php">Sign out</a></li>
                         </ul>
                     </div>
                 </div>

@@ -1,41 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import AppButton from '../../components/AppButton';
+import FormInput from '../../components/FormInput';
 import HeaderBlock from '../../components/HeaderBlock';
 import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
 import { useAppContext } from '../../context/AppContext';
+import { colors } from '../../theme/colors';
 
 export default function LoginScreen({ navigation }) {
-  const { loginAsRole } = useAppContext();
+  const { login, loading, error } = useAppContext();
+  const [form, setForm] = useState({ email: '', password: '' });
 
-  const handleDemoLogin = (role) => {
-    loginAsRole(role);
-    navigation.replace('MainApp');
+  const updateField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+
+  const handleLogin = async () => {
+    try {
+      await login({
+        email: form.email.trim(),
+        password: form.password,
+      });
+      navigation.replace('MainApp');
+    } catch {
+      // The Redux slice stores the backend error for display.
+    }
   };
 
   return (
     <Screen>
       <HeaderBlock
-        eyebrow="Demo Access"
-        title="Sign in quickly using the sample user roles."
-        subtitle="The UI is wired to local mock state for now, so you can test the flows while the PHP API is still being connected."
+        eyebrow="Secure Login"
+        title="Sign in to TRACE."
+        subtitle="Use the account created in the admin panel or through mobile registration."
       />
 
-      <SectionCard title="Parent account" subtitle="Manage students, book rides, and track vehicles.">
-        <AppButton label="Continue as Parent" onPress={() => handleDemoLogin('parent')} />
-      </SectionCard>
-
-      <SectionCard title="Driver account" subtitle="Receive bookings, update ride status, and share live location.">
-        <AppButton label="Continue as Driver" variant="secondary" onPress={() => handleDemoLogin('driver')} />
-      </SectionCard>
-
-      <SectionCard title="Student account" subtitle="View trip status, ETA, and emergency reminders.">
-        <AppButton label="Continue as Student" variant="ghost" onPress={() => handleDemoLogin('student')} />
+      <SectionCard title="Account credentials">
+        <FormInput label="Email" value={form.email} onChangeText={(value) => updateField('email', value)} placeholder="name@example.com" keyboardType="email-address" />
+        <FormInput label="Password" value={form.password} onChangeText={(value) => updateField('password', value)} placeholder="Password" secureTextEntry />
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <AppButton label={loading ? 'Signing in...' : 'Sign In'} onPress={handleLogin} />
       </SectionCard>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Need a new account instead?</Text>
+        <Text style={styles.footerText}>Need a new account?</Text>
         <AppButton label="Go to Registration" variant="ghost" onPress={() => navigation.navigate('RegisterRole')} />
       </View>
     </Screen>
@@ -50,5 +57,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 10,
     color: '#5c677d',
+  },
+  error: {
+    color: colors.danger,
+    marginBottom: 12,
+    fontWeight: '700',
   },
 });

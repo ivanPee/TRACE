@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors } from '../theme/colors';
 
-export default function FormInput({ label, value, onChangeText, placeholder, multiline = false }) {
+export default function FormInput({ label, value, onChangeText, placeholder, multiline = false, secureTextEntry = false, keyboardType = 'default' }) {
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
@@ -11,6 +11,8 @@ export default function FormInput({ label, value, onChangeText, placeholder, mul
         onChangeText={onChangeText}
         placeholder={placeholder}
         multiline={multiline}
+        secureTextEntry={secureTextEntry}
+        keyboardType={keyboardType}
         style={[styles.input, multiline ? styles.multiline : null]}
         placeholderTextColor="#98a2b3"
       />

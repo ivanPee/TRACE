@@ -16,19 +16,23 @@ export default function RegisterDriverScreen({ navigation }) {
     licenseNumber: '',
     vehiclePlateNumber: '',
     vehicleModel: '',
+    vehicleColor: '',
+    password: '',
   });
 
   const updateField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
-  const handleSubmit = () => {
-    registerDriver({
-      firstName: form.firstName || 'New',
-      lastName: form.lastName || 'Driver',
-      email: form.email || 'newdriver@trace.test',
-      mobileNumber: form.mobileNumber || '09179992222',
-      licenseNumber: form.licenseNumber || 'T00-00-000000',
-      vehiclePlateNumber: form.vehiclePlateNumber || 'XYZ-2026',
-      vehicleModel: form.vehicleModel || 'Nissan Urvan',
+  const handleSubmit = async () => {
+    await registerDriver({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      mobileNumber: form.mobileNumber,
+      licenseNumber: form.licenseNumber,
+      vehiclePlateNumber: form.vehiclePlateNumber,
+      vehicleModel: form.vehicleModel,
+      vehicleColor: form.vehicleColor,
+      password: form.password,
     });
     navigation.reset({
       index: 0,
@@ -51,6 +55,8 @@ export default function RegisterDriverScreen({ navigation }) {
         <FormInput label="Driver License Number" value={form.licenseNumber} onChangeText={(value) => updateField('licenseNumber', value)} placeholder="N01-23-456789" />
         <FormInput label="Vehicle Plate Number" value={form.vehiclePlateNumber} onChangeText={(value) => updateField('vehiclePlateNumber', value)} placeholder="ABC-1234" />
         <FormInput label="Vehicle Model" value={form.vehicleModel} onChangeText={(value) => updateField('vehicleModel', value)} placeholder="Toyota Hiace" />
+        <FormInput label="Vehicle Color" value={form.vehicleColor} onChangeText={(value) => updateField('vehicleColor', value)} placeholder="White" />
+        <FormInput label="Password" value={form.password} onChangeText={(value) => updateField('password', value)} placeholder="Password" secureTextEntry />
         <AppButton label="Create Driver Account" variant="secondary" onPress={handleSubmit} />
       </SectionCard>
     </Screen>

@@ -11,10 +11,15 @@ $routes = [
     ['POST', '/api/register/parent', [AuthController::class, 'registerParent']],
     ['POST', '/api/register/driver', [AuthController::class, 'registerDriver']],
     ['POST', '/api/login', [AuthController::class, 'login']],
+    ['GET', '/api/me', [AuthController::class, 'me']],
+    ['GET', '/api/parent/dashboard', [ParentController::class, 'dashboard']],
+    ['GET', '/api/drivers', [ParentController::class, 'drivers']],
     ['POST', '/api/parents/students', [ParentController::class, 'createStudent']],
     ['POST', '/api/bookings', [ParentController::class, 'createBooking']],
+    ['GET', '/api/driver/dashboard', [DriverController::class, 'dashboard']],
     ['POST', '/api/driver/rides/{id}/status', [DriverController::class, 'updateRideStatus']],
     ['POST', '/api/driver/rides/{id}/location', [DriverController::class, 'pushLocation']],
+    ['POST', '/api/driver/rides/{id}/transfer', [DriverController::class, 'transfer']],
     ['GET', '/api/rides/{id}/track', [RideController::class, 'track']],
 ];
 

@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useMemo } from 'react';
 import { Provider as ReduxProvider, useDispatch, useSelector } from 'react-redux';
-import { appActions } from '../store/appSlice';
+import { appActions, appThunks } from '../store/appSlice';
 import { store } from '../store/store';
 
 const AppContext = createContext(null);
@@ -9,13 +9,14 @@ function AppContextBridge({ children }) {
   const state = useSelector((currentState) => currentState.app);
   const dispatch = useDispatch();
 
-  const loginAsRole = useCallback((role) => dispatch(appActions.loginAsRole(role)), [dispatch]);
+  const login = useCallback((payload) => dispatch(appThunks.login(payload)).unwrap(), [dispatch]);
   const logout = useCallback(() => dispatch(appActions.logout()), [dispatch]);
-  const registerParent = useCallback((payload) => dispatch(appActions.registerParent(payload)), [dispatch]);
-  const registerDriver = useCallback((payload) => dispatch(appActions.registerDriver(payload)), [dispatch]);
-  const addStudent = useCallback((payload) => dispatch(appActions.addStudent(payload)), [dispatch]);
-  const createBooking = useCallback((payload) => dispatch(appActions.createBooking(payload)), [dispatch]);
-  const updateRideStatus = useCallback((status) => dispatch(appActions.updateRideStatus(status)), [dispatch]);
+  const registerParent = useCallback((payload) => dispatch(appThunks.registerParent(payload)).unwrap(), [dispatch]);
+  const registerDriver = useCallback((payload) => dispatch(appThunks.registerDriver(payload)).unwrap(), [dispatch]);
+  const refreshDashboard = useCallback(() => dispatch(appThunks.refreshDashboard()).unwrap(), [dispatch]);
+  const addStudent = useCallback((payload) => dispatch(appThunks.addStudent(payload)).unwrap(), [dispatch]);
+  const createBooking = useCallback((payload) => dispatch(appThunks.createBooking(payload)).unwrap(), [dispatch]);
+  const updateRideStatus = useCallback((status) => dispatch(appThunks.updateRideStatus(status)).unwrap(), [dispatch]);
   const setTrackingActive = useCallback((isTracking) => dispatch(appActions.setTrackingActive(isTracking)), [dispatch]);
   const advanceRideSimulation = useCallback(() => dispatch(appActions.advanceRideSimulation()), [dispatch]);
   const resetRideSimulation = useCallback(() => dispatch(appActions.resetRideSimulation()), [dispatch]);
@@ -24,10 +25,11 @@ function AppContextBridge({ children }) {
   const value = useMemo(
     () => ({
       ...state,
-      loginAsRole,
+      login,
       logout,
       registerParent,
       registerDriver,
+      refreshDashboard,
       addStudent,
       createBooking,
       updateRideStatus,
@@ -38,10 +40,11 @@ function AppContextBridge({ children }) {
     }),
     [
       state,
-      loginAsRole,
+      login,
       logout,
       registerParent,
       registerDriver,
+      refreshDashboard,
       addStudent,
       createBooking,
       updateRideStatus,

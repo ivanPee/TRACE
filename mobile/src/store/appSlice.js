@@ -1,122 +1,81 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { initialState, rideStatusSteps } from '../data/mockData';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { initialState, rideStatusSteps } from '../data/appDefaults';
+import { api } from '../services/api';
+
+const mergeData = (state, payload = {}) => {
+  state.students = payload.students ?? state.students;
+  state.bookings = payload.bookings ?? state.bookings;
+  state.rides = payload.rides ?? state.rides;
+  state.notifications = payload.notifications ?? state.notifications;
+  state.messages = payload.messages ?? state.messages;
+  state.availableDrivers = payload.drivers ?? state.availableDrivers;
+};
+
+export const login = createAsyncThunk('app/login', async (payload) => {
+  const auth = await api.login(payload);
+  const dashboard = auth.user.role === 'driver'
+    ? await api.driverDashboard(auth.token)
+    : auth.user.role === 'parent'
+      ? await api.parentDashboard(auth.token)
+      : {};
+  const drivers = auth.user.role === 'parent' ? await api.drivers(auth.token) : { drivers: [] };
+  return { ...auth, ...dashboard, ...drivers };
+});
+
+export const registerParent = createAsyncThunk('app/registerParent', async (payload) => {
+  const auth = await api.registerParent(payload);
+  const dashboard = await api.parentDashboard(auth.token);
+  const drivers = await api.drivers(auth.token);
+  return { ...auth, ...dashboard, ...drivers };
+});
+
+export const registerDriver = createAsyncThunk('app/registerDriver', async (payload) => {
+  const auth = await api.registerDriver(payload);
+  const dashboard = await api.driverDashboard(auth.token);
+  return { ...auth, ...dashboard };
+});
+
+export const refreshDashboard = createAsyncThunk('app/refreshDashboard', async (_, { getState }) => {
+  const { token, currentRole } = getState().app;
+  if (!token) {
+    return {};
+  }
+  const dashboard = currentRole === 'driver' ? await api.driverDashboard(token) : currentRole === 'parent' ? await api.parentDashboard(token) : {};
+  const drivers = currentRole === 'parent' ? await api.drivers(token) : { drivers: [] };
+  return { ...dashboard, ...drivers };
+});
+
+export const addStudent = createAsyncThunk('app/addStudent', async (payload, { getState }) => {
+  const { token } = getState().app;
+  return api.addStudent(token, payload);
+});
+
+export const createBooking = createAsyncThunk('app/createBooking', async (payload, { getState }) => {
+  const { token } = getState().app;
+  return api.createBooking(token, payload);
+});
+
+export const updateRideStatus = createAsyncThunk('app/updateRideStatus', async (status, { getState }) => {
+  const { token, rides } = getState().app;
+  return api.updateRideStatus(token, rides[0].id, status);
+});
+
+export const pushCurrentLocation = createAsyncThunk('app/pushCurrentLocation', async (_, { getState }) => {
+  const { token, rides } = getState().app;
+  const ride = rides[0];
+  return api.pushLocation(token, ride.id, {
+    latitude: ride.location.latitude,
+    longitude: ride.location.longitude,
+    recorded_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
+  });
+});
 
 const appSlice = createSlice({
   name: 'app',
   initialState,
   reducers: {
-    loginAsRole(state, action) {
-      const role = action.payload;
-      state.currentRole = role;
-      state.currentUser = state.users[role];
-    },
     logout(state) {
-      state.currentRole = null;
-      state.currentUser = null;
-    },
-    registerParent(state, action) {
-      const payload = action.payload;
-      const parent = {
-        id: 'parent-custom',
-        role: 'parent',
-        firstName: payload.firstName,
-        lastName: payload.lastName,
-        email: payload.email,
-        mobileNumber: payload.mobileNumber,
-        address: payload.address,
-      };
-
-      state.users.parent = parent;
-      state.currentRole = 'parent';
-      state.currentUser = parent;
-    },
-    registerDriver(state, action) {
-      const payload = action.payload;
-      const driver = {
-        id: 'driver-custom',
-        role: 'driver',
-        firstName: payload.firstName,
-        lastName: payload.lastName,
-        email: payload.email,
-        mobileNumber: payload.mobileNumber,
-        licenseNumber: payload.licenseNumber,
-        vehiclePlateNumber: payload.vehiclePlateNumber,
-        vehicleModel: payload.vehicleModel,
-        approvalStatus: 'pending',
-      };
-
-      state.users.driver = driver;
-      state.currentRole = 'driver';
-      state.currentUser = driver;
-      state.notifications.unshift({
-        id: `notif-driver-${Date.now()}`,
-        role: 'driver',
-        title: 'Registration received',
-        body: 'Your driver application is pending admin approval.',
-        time: 'Just now',
-      });
-    },
-    addStudent(state, action) {
-      const payload = action.payload;
-      const newStudent = {
-        id: `student-${Date.now()}`,
-        userId: `student-user-${Date.now()}`,
-        name: payload.studentName,
-        lrn: payload.lrn,
-        schoolName: payload.schoolName,
-        gradeLevel: payload.gradeLevel,
-        pickupAddress: payload.pickupAddress,
-        dropoffAddress: payload.dropoffAddress,
-        emergencyContact: payload.emergencyContact,
-        notes: payload.notes,
-      };
-
-      state.students.unshift(newStudent);
-      state.notifications.unshift({
-        id: `notif-student-${Date.now()}`,
-        role: 'parent',
-        title: 'Student account added',
-        body: `${payload.studentName} is now linked to your account.`,
-        time: 'Just now',
-      });
-    },
-    createBooking(state, action) {
-      const payload = action.payload;
-      state.bookings.unshift({
-        id: `booking-${Date.now()}`,
-        studentId: payload.studentId,
-        studentName: payload.studentName,
-        pickupAddress: payload.pickupAddress,
-        dropoffAddress: payload.dropoffAddress,
-        scheduledDate: payload.scheduledDate,
-        scheduledTime: payload.scheduledTime,
-        tripType: payload.tripType,
-        status: 'pending',
-        driverName: 'To be assigned',
-      });
-      state.notifications.unshift({
-        id: `notif-booking-${Date.now()}`,
-        role: 'parent',
-        title: 'Booking submitted',
-        body: `${payload.studentName}'s ride request is waiting for assignment.`,
-        time: 'Just now',
-      });
-    },
-    updateRideStatus(state, action) {
-      const status = action.payload;
-      const ride = state.rides[0];
-
-      if (!ride) {
-        return;
-      }
-
-      ride.status = status;
-      if (status === 'Completed') {
-        ride.progress = 1;
-        ride.etaMinutes = 0;
-        ride.distanceKm = 0;
-        ride.isTracking = false;
-      }
+      Object.assign(state, initialState);
     },
     setTrackingActive(state, action) {
       const ride = state.rides[0];
@@ -130,7 +89,7 @@ const appSlice = createSlice({
     advanceRideSimulation(state) {
       const ride = state.rides[0];
 
-      if (!ride || ride.status === 'Completed') {
+      if (!ride || ride.status === 'Completed' || !ride.routePoints?.length) {
         return;
       }
 
@@ -153,7 +112,7 @@ const appSlice = createSlice({
     resetRideSimulation(state) {
       const ride = state.rides[0];
 
-      if (!ride) {
+      if (!ride || !ride.routePoints?.length) {
         return;
       }
 
@@ -179,7 +138,7 @@ const appSlice = createSlice({
       const sender = state.currentUser?.firstName || 'TRACE User';
 
       state.messages.push({
-        id: `msg-${Date.now()}`,
+        id: `local-msg-${Date.now()}`,
         senderRole: state.currentRole,
         senderName: sender,
         receiverRole,
@@ -188,7 +147,55 @@ const appSlice = createSlice({
       });
     },
   },
+  extraReducers: (builder) => {
+    const pending = (state) => {
+      state.loading = true;
+      state.error = null;
+    };
+    const rejected = (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
+    };
+    const authed = (state, action) => {
+      state.loading = false;
+      state.error = null;
+      state.token = action.payload.token;
+      state.currentUser = action.payload.user;
+      state.currentRole = action.payload.user.role;
+      mergeData(state, action.payload);
+    };
+    const refreshed = (state, action) => {
+      state.loading = false;
+      state.error = null;
+      mergeData(state, action.payload);
+    };
+
+    builder
+      .addCase(login.pending, pending)
+      .addCase(login.fulfilled, authed)
+      .addCase(login.rejected, rejected)
+      .addCase(registerParent.pending, pending)
+      .addCase(registerParent.fulfilled, authed)
+      .addCase(registerParent.rejected, rejected)
+      .addCase(registerDriver.pending, pending)
+      .addCase(registerDriver.fulfilled, authed)
+      .addCase(registerDriver.rejected, rejected)
+      .addCase(refreshDashboard.pending, pending)
+      .addCase(refreshDashboard.fulfilled, refreshed)
+      .addCase(refreshDashboard.rejected, rejected)
+      .addCase(addStudent.pending, pending)
+      .addCase(addStudent.fulfilled, refreshed)
+      .addCase(addStudent.rejected, rejected)
+      .addCase(createBooking.pending, pending)
+      .addCase(createBooking.fulfilled, refreshed)
+      .addCase(createBooking.rejected, rejected)
+      .addCase(updateRideStatus.pending, pending)
+      .addCase(updateRideStatus.fulfilled, refreshed)
+      .addCase(updateRideStatus.rejected, rejected)
+      .addCase(pushCurrentLocation.fulfilled, refreshed);
+  },
 });
 
 export const appActions = appSlice.actions;
+export const appThunks = { login, registerParent, registerDriver, refreshDashboard, addStudent, createBooking, updateRideStatus, pushCurrentLocation };
 export default appSlice.reducer;

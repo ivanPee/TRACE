@@ -28,7 +28,7 @@ export default function ChatScreen({ navigation }) {
       <HeaderBlock
         eyebrow="Messaging"
         title="Trip coordination chat."
-        subtitle="Parents and drivers can coordinate pickup timing here. Students can use this as a lightweight alert feed in the prototype."
+        subtitle="Parents, drivers, and students can coordinate pickup timing and urgent updates here."
       />
 
       <SectionCard title="Conversation">

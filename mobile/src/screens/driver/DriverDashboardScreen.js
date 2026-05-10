@@ -4,7 +4,6 @@ import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import HeaderBlock from '../../components/HeaderBlock';
 import Pill from '../../components/Pill';
-import RoleSimulator from '../../components/RoleSimulator';
 import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
 import StatGrid from '../../components/StatGrid';
@@ -12,14 +11,12 @@ import { useAppContext } from '../../context/AppContext';
 import { useAppShell } from '../../navigation/AppShellContext';
 
 export default function DriverDashboardScreen({ navigation }) {
-  const { currentRole, currentUser, rides, bookings, logout, loginAsRole } = useAppContext();
+  const { currentUser, rides, bookings, logout } = useAppContext();
   const { exitToWelcome } = useAppShell();
   const ride = rides[0];
 
   return (
     <Screen bottomBar={<AppNavBar navigation={navigation} active="home" />}>
-      <RoleSimulator currentRole={currentRole} loginAsRole={loginAsRole} navigation={navigation} />
-
       <HeaderBlock
         eyebrow="Driver Panel"
         title={`Welcome, ${currentUser?.firstName || 'Driver'}`}
@@ -30,19 +27,25 @@ export default function DriverDashboardScreen({ navigation }) {
         items={[
           { label: 'Assigned Trips', value: bookings.length },
           { label: 'Active Rides', value: rides.length },
-          { label: 'ETA', value: `${ride.etaMinutes}m` },
+          { label: 'ETA', value: ride ? `${ride.etaMinutes}m` : '-' },
           { label: 'Approval', value: currentUser?.approvalStatus === 'approved' ? 'OK' : 'PENDING' },
         ]}
       />
 
       <SectionCard title="Next active ride" subtitle="Use this area to begin a pickup workflow." tone="soft">
-        <Pill label={ride.status} tone="warning" />
-        <Text>Student: {ride.studentName}</Text>
-        <Text>Parent: {ride.parentName}</Text>
-        <Text>Pickup Time: {ride.pickupTime}</Text>
-        <Text>Vehicle: {ride.vehicle}</Text>
-        <Text>Distance left: {ride.distanceKm} km</Text>
-        <AppButton label="Open Trip Controls" onPress={() => navigation.navigate('DriverTrips')} />
+        {ride ? (
+          <>
+            <Pill label={ride.status} tone="warning" />
+            <Text>Student: {ride.studentName}</Text>
+            <Text>Parent: {ride.parentName}</Text>
+            <Text>Pickup Time: {ride.pickupTime}</Text>
+            <Text>Vehicle: {ride.vehicle}</Text>
+            <Text>Distance left: {ride.distanceKm} km</Text>
+            <AppButton label="Open Trip Controls" onPress={() => navigation.navigate('DriverTrips')} />
+          </>
+        ) : (
+          <Text>No assigned students yet. Assignments appear after parents select you for a booking.</Text>
+        )}
       </SectionCard>
 
       <SectionCard title="Driver tools">

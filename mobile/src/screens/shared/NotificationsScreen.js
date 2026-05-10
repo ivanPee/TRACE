@@ -16,7 +16,7 @@ export default function NotificationsScreen({ navigation }) {
       <HeaderBlock
         eyebrow="Alerts"
         title="Recent system notifications."
-        subtitle="These are role-filtered in the prototype and should later come from the PHP notifications table."
+        subtitle="Alerts come from trip status changes, assignment updates, and operational notices."
       />
 
       {visibleNotifications.map((item) => (

@@ -15,14 +15,15 @@ export default function ActiveRideMapScreen({ navigation }) {
   const { currentRole, rides, setTrackingActive, advanceRideSimulation, resetRideSimulation } = useAppContext();
   const ride = rides[0];
   const mapRef = useRef(null);
-  const origin = ride.routePoints[0];
-  const destination = ride.routePoints[ride.routePoints.length - 1];
-  const completedRoute = ride.routePoints.slice(0, (ride.currentPointIndex || 0) + 1);
-  const remainingRoute = ride.routePoints.slice(ride.currentPointIndex || 0);
-  const progressPercent = Math.round((ride.progress || 0) * 100);
+  const routePoints = ride?.routePoints?.length ? ride.routePoints : [];
+  const origin = routePoints[0];
+  const destination = routePoints[routePoints.length - 1];
+  const completedRoute = routePoints.slice(0, (ride?.currentPointIndex || 0) + 1);
+  const remainingRoute = routePoints.slice(ride?.currentPointIndex || 0);
+  const progressPercent = Math.round((ride?.progress || 0) * 100);
 
   useEffect(() => {
-    if (!ride.isTracking) {
+    if (!ride?.isTracking) {
       return undefined;
     }
 
@@ -31,9 +32,13 @@ export default function ActiveRideMapScreen({ navigation }) {
     }, 1800);
 
     return () => clearInterval(timer);
-  }, [advanceRideSimulation, ride.isTracking]);
+  }, [advanceRideSimulation, ride?.isTracking]);
 
   useEffect(() => {
+    if (!ride?.location) {
+      return;
+    }
+
     mapRef.current?.animateToRegion(
       {
         ...ride.location,
@@ -42,23 +47,31 @@ export default function ActiveRideMapScreen({ navigation }) {
       },
       450
     );
-  }, [ride.location]);
+  }, [ride?.location]);
+
+  if (!ride) {
+    return (
+      <Screen bottomBar={<AppNavBar navigation={navigation} active={currentRole === 'student' ? 'ride' : 'bookings'} />}>
+        <HeaderBlock eyebrow="Live Tracking" title="No active ride to track." subtitle="Tracking starts after a driver is assigned and the trip begins." />
+      </Screen>
+    );
+  }
 
   return (
     <Screen bottomBar={<AppNavBar navigation={navigation} active={currentRole === 'student' ? 'ride' : 'bookings'} />}>
       <HeaderBlock
         eyebrow="Live Tracking"
-        title={currentRole === 'driver' ? 'Driver route simulator' : 'Real-time route view'}
-        subtitle="The tracking is static mock data for now, but it behaves like live GPS: the vehicle marker moves, ETA changes, and every role sees the same ride state."
+        title={currentRole === 'driver' ? 'Driver route controls' : 'Real-time route view'}
+        subtitle="Driver GPS updates are saved to the backend and shared with parent and student tracking views."
       />
 
       <View style={styles.mapWrap}>
         <MapView ref={mapRef} initialRegion={ride.location} style={styles.map}>
           <Marker coordinate={ride.location} title={ride.driverName} description={`${ride.status} - ${ride.etaMinutes} mins ETA`} pinColor={colors.accent} />
-          <Marker coordinate={origin} title="Pickup Point" description={ride.studentName} pinColor={colors.success} />
-          <Marker coordinate={destination} title="Drop-off Point" description="School destination" pinColor={colors.plum} />
-          <Polyline coordinates={remainingRoute} strokeWidth={5} strokeColor={colors.line} />
-          <Polyline coordinates={completedRoute} strokeWidth={6} strokeColor={colors.deep} />
+          {origin ? <Marker coordinate={origin} title="Pickup Point" description={ride.studentName} pinColor={colors.success} /> : null}
+          {destination ? <Marker coordinate={destination} title="Drop-off Point" description="School destination" pinColor={colors.plum} /> : null}
+          {remainingRoute.length ? <Polyline coordinates={remainingRoute} strokeWidth={5} strokeColor={colors.line} /> : null}
+          {completedRoute.length ? <Polyline coordinates={completedRoute} strokeWidth={6} strokeColor={colors.deep} /> : null}
         </MapView>
       </View>
 
@@ -74,11 +87,11 @@ export default function ActiveRideMapScreen({ navigation }) {
         <InfoRow label="Route progress" value={`${progressPercent}%`} />
       </SectionCard>
 
-      <SectionCard title="Tracking controls" subtitle={currentRole === 'driver' ? 'Use these to simulate live GPS sharing.' : 'Use these to preview what parents and students will see.'}>
+      <SectionCard title="Tracking controls" subtitle={currentRole === 'driver' ? 'Use these while the trip is active.' : 'Latest shared vehicle location.'}>
         <AppButton label={ride.isTracking ? 'Pause Tracking' : 'Start Tracking'} onPress={() => setTrackingActive(!ride.isTracking)} />
         <AppButton label="Move One Step" variant="secondary" onPress={advanceRideSimulation} />
         <AppButton label="Reset Simulation" variant="ghost" onPress={resetRideSimulation} />
-        <Text style={styles.note}>In the connected version, the driver app will push GPS coordinates to the backend and parent/student apps will receive updates from the same ride record.</Text>
+        <Text style={styles.note}>The map follows the latest route and ride status returned by TRACE.</Text>
       </SectionCard>
     </Screen>
   );

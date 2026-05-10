@@ -67,6 +67,48 @@ function redirect_to($path)
     exit;
 }
 
+function current_admin()
+{
+    if (empty($_SESSION['admin_user_id'])) {
+        return null;
+    }
+
+    $stmt = db()->prepare(
+        'SELECT users.*, roles.code AS role_code
+         FROM users
+         JOIN roles ON roles.id = users.role_id
+         WHERE users.id = ? AND roles.code = "admin"
+         LIMIT 1'
+    );
+    $stmt->execute([(int) $_SESSION['admin_user_id']]);
+    $admin = $stmt->fetch();
+
+    return $admin ?: null;
+}
+
+function require_admin()
+{
+    $admin = current_admin();
+
+    if (!$admin) {
+        redirect_to('login.php');
+    }
+
+    return $admin;
+}
+
+function admin_log($action, $table, $recordId = null, $description = '')
+{
+    $adminId = isset($_SESSION['admin_user_id']) ? (int) $_SESSION['admin_user_id'] : null;
+
+    if (!$adminId) {
+        return;
+    }
+
+    $stmt = db()->prepare('INSERT INTO admin_logs (admin_user_id, action, table_name, record_id, description) VALUES (?, ?, ?, ?, ?)');
+    $stmt->execute([$adminId, $action, $table, $recordId, $description]);
+}
+
 function csrf_token()
 {
     if (empty($_SESSION['csrf_token'])) {

@@ -15,9 +15,9 @@ export default function WelcomeScreen({ navigation }) {
       <HeaderBlock
         eyebrow="Student Transport"
         title="A single app flow for parents, drivers, and students."
-        subtitle="This prototype already covers registration, student management, ride booking, live trip status, notifications, and chat-ready screens."
+        subtitle="Manage registration, student transport, driver assignments, live status, notifications, and trip coordination."
       />
-      <AppButton label="Login to Demo Roles" onPress={() => navigation.navigate('Login')} />
+      <AppButton label="Login" onPress={() => navigation.navigate('Login')} />
       <AppButton label="Create an Account" variant="secondary" onPress={() => navigation.navigate('RegisterRole')} />
     </Screen>
   );

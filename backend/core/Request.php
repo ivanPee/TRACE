@@ -18,6 +18,10 @@ class Request
             $uri = substr($uri, strlen($scriptDir));
         }
 
+        if (strpos($uri, '/index.php') === 0) {
+            $uri = substr($uri, strlen('/index.php'));
+        }
+
         return '/' . trim($uri ?: '/', '/');
     }
 

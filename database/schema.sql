@@ -14,6 +14,13 @@ INSERT INTO roles (code, name) VALUES
 ('parent', 'Parent'),
 ('student', 'Student');
 
+INSERT INTO users (role_id, first_name, last_name, email, mobile_number, password_hash, status, is_verified)
+SELECT id, 'System', 'Admin', 'admin@trace.test', '09000000000', '$2y$10$TBaiMFxt3f7QqGsSc6g77.nJnilxgjSf4CagE8E0l3J6i3/SiqKR2', 'active', 1
+FROM roles
+WHERE code = 'admin';
+
+-- password
+
 CREATE TABLE users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     role_id INT UNSIGNED NOT NULL,

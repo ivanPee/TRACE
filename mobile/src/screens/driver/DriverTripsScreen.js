@@ -7,11 +7,19 @@ import Pill from '../../components/Pill';
 import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
 import { useAppContext } from '../../context/AppContext';
-import { rideStatusSteps } from '../../data/mockData';
+import { rideStatusSteps } from '../../data/appDefaults';
 
 export default function DriverTripsScreen({ navigation }) {
   const { rides, updateRideStatus, setTrackingActive, advanceRideSimulation, resetRideSimulation } = useAppContext();
   const ride = rides[0];
+
+  if (!ride) {
+    return (
+      <Screen bottomBar={<AppNavBar navigation={navigation} active="bookings" />}>
+        <HeaderBlock eyebrow="Trip Controls" title="No active assigned ride." subtitle="Assigned students appear here after a parent books you as the driver." />
+      </Screen>
+    );
+  }
 
   return (
     <Screen bottomBar={<AppNavBar navigation={navigation} active="bookings" />}>
@@ -35,7 +43,7 @@ export default function DriverTripsScreen({ navigation }) {
         ))}
       </SectionCard>
 
-      <SectionCard title="GPS simulator">
+      <SectionCard title="GPS sharing">
         <AppButton label={ride.isTracking ? 'Pause Live Sharing' : 'Start Live Sharing'} onPress={() => setTrackingActive(!ride.isTracking)} />
         <AppButton label="Push Next Location" variant="secondary" onPress={advanceRideSimulation} />
         <AppButton label="Reset Route" variant="ghost" onPress={resetRideSimulation} />

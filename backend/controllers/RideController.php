@@ -2,24 +2,39 @@
 
 namespace Controllers;
 
+use Core\ApiController;
 use Core\Response;
 
-class RideController
+class RideController extends ApiController
 {
     public function track(array $params = []): void
     {
+        $this->requireUser();
+        $stmt = $this->pdo->prepare(
+            'SELECT rides.*, drivers.current_latitude, drivers.current_longitude, users.first_name, users.last_name
+             FROM rides
+             JOIN drivers ON drivers.id = rides.driver_id
+             JOIN users ON users.id = drivers.user_id
+             WHERE rides.id = ?
+             LIMIT 1'
+        );
+        $stmt->execute([(int) ($params['id'] ?? 0)]);
+        $ride = $stmt->fetch();
+
+        if (!$ride) {
+            Response::json(['success' => false, 'message' => 'Ride not found.'], 404);
+        }
+
         Response::json([
             'success' => true,
-            'message' => 'Ride tracking endpoint scaffolded.',
             'data' => [
-                'ride_id' => $params['id'] ?? null,
+                'ride_id' => (int) $ride['id'],
+                'status' => $ride['ride_status'],
                 'driver' => [
-                    'name' => 'Sample Driver',
-                    'latitude' => 10.6765,
-                    'longitude' => 122.9509,
+                    'name' => trim($ride['first_name'] . ' ' . $ride['last_name']),
+                    'latitude' => (float) ($ride['current_latitude'] ?: 0),
+                    'longitude' => (float) ($ride['current_longitude'] ?: 0),
                 ],
-                'student_status' => 'picked_up',
-                'eta_minutes' => 12,
             ],
         ]);
     }

@@ -23,14 +23,18 @@ export default function AddStudentScreen({ navigation }) {
   const updateField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
   const handleSave = () => {
+    if (!form.studentName || !form.lrn) {
+      return;
+    }
+
     addStudent({
-      studentName: form.studentName || 'New Student',
-      lrn: form.lrn || `${Date.now()}`.slice(-12),
-      schoolName: form.schoolName || 'School Name',
-      gradeLevel: form.gradeLevel || 'Grade Level',
-      pickupAddress: form.pickupAddress || 'Home address',
-      dropoffAddress: form.dropoffAddress || 'School gate',
-      emergencyContact: form.emergencyContact || 'Parent contact',
+      studentName: form.studentName,
+      lrn: form.lrn,
+      schoolName: form.schoolName,
+      gradeLevel: form.gradeLevel,
+      pickupAddress: form.pickupAddress,
+      dropoffAddress: form.dropoffAddress,
+      emergencyContact: form.emergencyContact,
       notes: form.notes,
     });
 
