@@ -56,8 +56,12 @@ export default function ChatScreen({ navigation }) {
         />
         <AppButton
           label="Send"
-          onPress={() => {
-            sendMessage(draft);
+          onPress={async () => {
+            if (!draft.trim()) {
+              return;
+            }
+
+            await sendMessage(draft);
             setDraft('');
           }}
         />

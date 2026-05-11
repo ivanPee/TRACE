@@ -1,13 +1,17 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppShell } from '../navigation/AppShellContext';
 import { colors } from '../theme/colors';
 
-export default function Screen({ children, scroll = true, style, bottomBar }) {
+export default function Screen({ children, scroll = true, style, bottomBar, refreshing = false, onRefresh }) {
   const { isInAppShell } = useAppShell();
   const content = scroll ? (
-    <ScrollView contentContainerStyle={[styles.content, style]} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      contentContainerStyle={[styles.content, style]}
+      showsVerticalScrollIndicator={false}
+      refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined}
+    >
       {children}
     </ScrollView>
   ) : (

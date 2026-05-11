@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Text } from 'react-native';
 import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
@@ -10,14 +10,23 @@ import SectionCard from '../../components/SectionCard';
 import { useAppContext } from '../../context/AppContext';
 
 export default function BookingsScreen({ navigation }) {
-  const { currentRole, bookings, rides, messages } = useAppContext();
+  const { currentRole, bookings, rides, messages, refreshDashboard, approveBooking, rejectBooking } = useAppContext();
+  const [refreshing, setRefreshing] = useState(false);
   const ride = rides[0];
   const recentMessages = messages.slice(-2);
   const isDriver = currentRole === 'driver';
   const isParent = currentRole === 'parent';
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshDashboard();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
-    <Screen bottomBar={<AppNavBar navigation={navigation} active="bookings" />}>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active="bookings" />} refreshing={refreshing} onRefresh={handleRefresh}>
       <HeaderBlock
         eyebrow={isDriver ? 'Pickup Manager' : 'Booking Manager'}
         title={isDriver ? 'Handle pickups and parent coordination.' : 'Manage bookings and driver coordination.'}
@@ -43,10 +52,17 @@ export default function BookingsScreen({ navigation }) {
       <SectionCard title={isDriver ? 'Assigned bookings' : 'Submitted bookings'} subtitle="Current booking requests and ride schedules.">
         {bookings.map((booking) => (
           <SectionCard key={booking.id} title={booking.studentName} subtitle={`${booking.scheduledDate} - ${booking.scheduledTime}`}>
-            <Pill label={booking.status} tone={booking.status === 'assigned' ? 'success' : 'warning'} />
+            <Pill label={booking.status} tone={booking.status === 'assigned' || booking.status === 'completed' ? 'success' : 'warning'} />
             <InfoRow label="Pickup" value={booking.pickupAddress} />
             <InfoRow label="Drop-off" value={booking.dropoffAddress} />
-            <InfoRow label={isDriver ? 'Assigned by' : 'Driver'} value={booking.driverName} />
+            <InfoRow label={isDriver ? 'Parent' : 'Driver'} value={isDriver ? booking.parentName || booking.driverName : booking.driverName} />
+            <InfoRow label="Trip type" value={booking.tripType ? booking.tripType.replace('_', ' ') : '-'} />
+            {isDriver && booking.canApprove ? (
+              <>
+                <AppButton label="Approve Booking" onPress={() => approveBooking(booking.id)} />
+                <AppButton label="Reject Booking" variant="ghost" onPress={() => rejectBooking(booking.id)} />
+              </>
+            ) : null}
           </SectionCard>
         ))}
         {isParent ? <AppButton label="Create New Booking" onPress={() => navigation.navigate('BookRide')} /> : null}

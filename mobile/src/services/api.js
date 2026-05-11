@@ -1,9 +1,10 @@
-const API_BASE_URL = 'http://192.168.1.10/trace/TRACE/backend/index.php';
+const API_BASE_URL = 'http://192.168.69.159/trace/TRACE/backend/index.php';
 const REQUEST_TIMEOUT_MS = 15000;
 
 async function request(path, { method = 'GET', token, body } = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
 
   let response;
   let json;
@@ -13,10 +14,10 @@ async function request(path, { method = 'GET', token, body } = {}) {
       method,
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: body ? JSON.stringify(body) : undefined,
+      body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
       signal: controller.signal,
     });
     json = await response.json();
@@ -41,12 +42,18 @@ export const api = {
   login: (payload) => request('/api/login', { method: 'POST', body: payload }),
   registerParent: (payload) => request('/api/register/parent', { method: 'POST', body: payload }),
   registerDriver: (payload) => request('/api/register/driver', { method: 'POST', body: payload }),
+  updateProfile: (token, payload) => request('/api/profile', { method: 'POST', token, body: payload }),
   parentDashboard: (token) => request('/api/parent/dashboard', { token }),
   driverDashboard: (token) => request('/api/driver/dashboard', { token }),
   drivers: (token) => request('/api/drivers', { token }),
   addStudent: (token, payload) => request('/api/parents/students', { method: 'POST', token, body: payload }),
+  updateStudent: (token, studentId, payload) => request(`/api/parents/students/${studentId}`, { method: 'POST', token, body: payload }),
   createBooking: (token, payload) => request('/api/bookings', { method: 'POST', token, body: payload }),
+  approveBooking: (token, bookingId) => request(`/api/driver/bookings/${bookingId}/approve`, { method: 'POST', token }),
+  rejectBooking: (token, bookingId) => request(`/api/driver/bookings/${bookingId}/reject`, { method: 'POST', token }),
+  updateDriverAvailability: (token, isOnline) => request('/api/driver/availability', { method: 'POST', token, body: { isOnline } }),
   updateRideStatus: (token, rideId, status) => request(`/api/driver/rides/${rideId}/status`, { method: 'POST', token, body: { status } }),
   pushLocation: (token, rideId, location) => request(`/api/driver/rides/${rideId}/location`, { method: 'POST', token, body: location }),
   transferRide: (token, rideId, driverId) => request(`/api/driver/rides/${rideId}/transfer`, { method: 'POST', token, body: { driverId } }),
+  sendMessage: (token, text) => request('/api/messages', { method: 'POST', token, body: { text } }),
 };

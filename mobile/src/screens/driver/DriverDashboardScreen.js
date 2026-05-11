@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Text } from 'react-native';
 import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
@@ -11,12 +11,28 @@ import { useAppContext } from '../../context/AppContext';
 import { useAppShell } from '../../navigation/AppShellContext';
 
 export default function DriverDashboardScreen({ navigation }) {
-  const { currentUser, rides, bookings, logout } = useAppContext();
+  const { currentUser, rides, bookings, logout, refreshDashboard, updateDriverAvailability } = useAppContext();
+  const [refreshing, setRefreshing] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const { exitToWelcome } = useAppShell();
   const ride = rides[0];
+  const pendingBookings = bookings.filter((booking) => booking.canApprove);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshDashboard();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+  const handleAvailability = async () => {
+    const nextValue = !isOnline;
+    setIsOnline(nextValue);
+    await updateDriverAvailability(nextValue);
+  };
 
   return (
-    <Screen bottomBar={<AppNavBar navigation={navigation} active="home" />}>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active="home" />} refreshing={refreshing} onRefresh={handleRefresh}>
       <HeaderBlock
         eyebrow="Driver Panel"
         title={`Welcome, ${currentUser?.firstName || 'Driver'}`}
@@ -28,9 +44,14 @@ export default function DriverDashboardScreen({ navigation }) {
           { label: 'Assigned Trips', value: bookings.length },
           { label: 'Active Rides', value: rides.length },
           { label: 'ETA', value: ride ? `${ride.etaMinutes}m` : '-' },
-          { label: 'Approval', value: currentUser?.approvalStatus === 'approved' ? 'OK' : 'PENDING' },
+          { label: 'Requests', value: pendingBookings.length },
         ]}
       />
+
+      <SectionCard title="Availability" subtitle="Parents can see this while choosing a driver.">
+        <Pill label={isOnline ? 'Online' : 'Offline'} tone={isOnline ? 'success' : 'warning'} />
+        <AppButton label={isOnline ? 'Go Offline' : 'Go Online'} variant="secondary" onPress={handleAvailability} />
+      </SectionCard>
 
       <SectionCard title="Next active ride" subtitle="Use this area to begin a pickup workflow." tone="soft">
         {ride ? (
@@ -58,8 +79,8 @@ export default function DriverDashboardScreen({ navigation }) {
         <AppButton
           label="Logout"
           variant="ghost"
-          onPress={() => {
-            logout();
+          onPress={async () => {
+            await logout();
             exitToWelcome();
           }}
         />

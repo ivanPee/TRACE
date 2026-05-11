@@ -45,14 +45,39 @@ export const refreshDashboard = createAsyncThunk('app/refreshDashboard', async (
   return { ...dashboard, ...drivers };
 });
 
+export const updateProfile = createAsyncThunk('app/updateProfile', async (payload, { getState }) => {
+  const { token } = getState().app;
+  return api.updateProfile(token, payload);
+});
+
 export const addStudent = createAsyncThunk('app/addStudent', async (payload, { getState }) => {
   const { token } = getState().app;
   return api.addStudent(token, payload);
 });
 
+export const updateStudent = createAsyncThunk('app/updateStudent', async ({ studentId, payload }, { getState }) => {
+  const { token } = getState().app;
+  return api.updateStudent(token, studentId, payload);
+});
+
 export const createBooking = createAsyncThunk('app/createBooking', async (payload, { getState }) => {
   const { token } = getState().app;
   return api.createBooking(token, payload);
+});
+
+export const approveBooking = createAsyncThunk('app/approveBooking', async (bookingId, { getState }) => {
+  const { token } = getState().app;
+  return api.approveBooking(token, bookingId);
+});
+
+export const rejectBooking = createAsyncThunk('app/rejectBooking', async (bookingId, { getState }) => {
+  const { token } = getState().app;
+  return api.rejectBooking(token, bookingId);
+});
+
+export const updateDriverAvailability = createAsyncThunk('app/updateDriverAvailability', async (isOnline, { getState }) => {
+  const { token } = getState().app;
+  return api.updateDriverAvailability(token, isOnline);
 });
 
 export const updateRideStatus = createAsyncThunk('app/updateRideStatus', async (status, { getState }) => {
@@ -68,6 +93,13 @@ export const pushCurrentLocation = createAsyncThunk('app/pushCurrentLocation', a
     longitude: ride.location.longitude,
     recorded_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
   });
+});
+
+export const sendRemoteMessage = createAsyncThunk('app/sendRemoteMessage', async (text, { getState }) => {
+  const { token, currentRole } = getState().app;
+  await api.sendMessage(token, text);
+  const dashboard = currentRole === 'driver' ? await api.driverDashboard(token) : currentRole === 'parent' ? await api.parentDashboard(token) : {};
+  return dashboard;
 });
 
 const appSlice = createSlice({
@@ -159,9 +191,9 @@ const appSlice = createSlice({
     const authed = (state, action) => {
       state.loading = false;
       state.error = null;
-      state.token = action.payload.token;
-      state.currentUser = action.payload.user;
-      state.currentRole = action.payload.user.role;
+      state.token = action.payload.token ?? state.token;
+      state.currentUser = action.payload.user ?? state.currentUser;
+      state.currentRole = action.payload.user?.role ?? state.currentRole;
       mergeData(state, action.payload);
     };
     const refreshed = (state, action) => {
@@ -183,19 +215,35 @@ const appSlice = createSlice({
       .addCase(refreshDashboard.pending, pending)
       .addCase(refreshDashboard.fulfilled, refreshed)
       .addCase(refreshDashboard.rejected, rejected)
+      .addCase(updateProfile.pending, pending)
+      .addCase(updateProfile.fulfilled, authed)
+      .addCase(updateProfile.rejected, rejected)
       .addCase(addStudent.pending, pending)
       .addCase(addStudent.fulfilled, refreshed)
       .addCase(addStudent.rejected, rejected)
+      .addCase(updateStudent.pending, pending)
+      .addCase(updateStudent.fulfilled, refreshed)
+      .addCase(updateStudent.rejected, rejected)
       .addCase(createBooking.pending, pending)
       .addCase(createBooking.fulfilled, refreshed)
       .addCase(createBooking.rejected, rejected)
+      .addCase(approveBooking.pending, pending)
+      .addCase(approveBooking.fulfilled, refreshed)
+      .addCase(approveBooking.rejected, rejected)
+      .addCase(rejectBooking.pending, pending)
+      .addCase(rejectBooking.fulfilled, refreshed)
+      .addCase(rejectBooking.rejected, rejected)
+      .addCase(updateDriverAvailability.fulfilled, refreshed)
       .addCase(updateRideStatus.pending, pending)
       .addCase(updateRideStatus.fulfilled, refreshed)
       .addCase(updateRideStatus.rejected, rejected)
-      .addCase(pushCurrentLocation.fulfilled, refreshed);
+      .addCase(pushCurrentLocation.fulfilled, refreshed)
+      .addCase(sendRemoteMessage.pending, pending)
+      .addCase(sendRemoteMessage.fulfilled, refreshed)
+      .addCase(sendRemoteMessage.rejected, rejected);
   },
 });
 
 export const appActions = appSlice.actions;
-export const appThunks = { login, registerParent, registerDriver, refreshDashboard, addStudent, createBooking, updateRideStatus, pushCurrentLocation };
+export const appThunks = { login, registerParent, registerDriver, refreshDashboard, updateProfile, addStudent, updateStudent, createBooking, approveBooking, rejectBooking, updateDriverAvailability, updateRideStatus, pushCurrentLocation, sendRemoteMessage };
 export default appSlice.reducer;

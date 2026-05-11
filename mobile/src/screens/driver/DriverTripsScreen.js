@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import HeaderBlock from '../../components/HeaderBlock';
@@ -10,23 +10,32 @@ import { useAppContext } from '../../context/AppContext';
 import { rideStatusSteps } from '../../data/appDefaults';
 
 export default function DriverTripsScreen({ navigation }) {
-  const { rides, updateRideStatus, setTrackingActive, advanceRideSimulation, resetRideSimulation } = useAppContext();
+  const { rides, updateRideStatus, setTrackingActive, advanceRideSimulation, resetRideSimulation, refreshDashboard } = useAppContext();
+  const [refreshing, setRefreshing] = useState(false);
   const ride = rides[0];
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshDashboard();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (!ride) {
     return (
-      <Screen bottomBar={<AppNavBar navigation={navigation} active="bookings" />}>
+      <Screen bottomBar={<AppNavBar navigation={navigation} active="bookings" />} refreshing={refreshing} onRefresh={handleRefresh}>
         <HeaderBlock eyebrow="Trip Controls" title="No active assigned ride." subtitle="Assigned students appear here after a parent books you as the driver." />
       </Screen>
     );
   }
 
   return (
-    <Screen bottomBar={<AppNavBar navigation={navigation} active="bookings" />}>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active="bookings" />} refreshing={refreshing} onRefresh={handleRefresh}>
       <HeaderBlock
         eyebrow="Trip Controls"
         title="Manage the active student ride."
-        subtitle="In the backend version these buttons should call the PHP ride status endpoint and push location updates during the trip."
+        subtitle="Status updates are saved to the backend and reflected for the parent automatically."
       />
 
       <SectionCard title={ride.studentName} subtitle={ride.vehicle}>

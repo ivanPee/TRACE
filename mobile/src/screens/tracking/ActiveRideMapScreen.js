@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { PermissionsAndroid, Platform, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
@@ -13,6 +13,7 @@ import { colors } from '../../theme/colors';
 
 export default function ActiveRideMapScreen({ navigation }) {
   const { currentRole, rides, setTrackingActive, advanceRideSimulation, resetRideSimulation } = useAppContext();
+  const [locationAllowed, setLocationAllowed] = useState(Platform.OS !== 'android');
   const ride = rides[0];
   const mapRef = useRef(null);
   const routePoints = ride?.routePoints?.length ? ride.routePoints : [];
@@ -21,6 +22,19 @@ export default function ActiveRideMapScreen({ navigation }) {
   const completedRoute = routePoints.slice(0, (ride?.currentPointIndex || 0) + 1);
   const remainingRoute = routePoints.slice(ride?.currentPointIndex || 0);
   const progressPercent = Math.round((ride?.progress || 0) * 100);
+
+  useEffect(() => {
+    const requestPermission = async () => {
+      if (Platform.OS !== 'android') {
+        return;
+      }
+
+      const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+      setLocationAllowed(granted === PermissionsAndroid.RESULTS.GRANTED);
+    };
+
+    requestPermission();
+  }, []);
 
   useEffect(() => {
     if (!ride?.isTracking) {
@@ -66,7 +80,7 @@ export default function ActiveRideMapScreen({ navigation }) {
       />
 
       <View style={styles.mapWrap}>
-        <MapView ref={mapRef} initialRegion={ride.location} style={styles.map}>
+        <MapView ref={mapRef} initialRegion={ride.location} style={styles.map} showsUserLocation={locationAllowed}>
           <Marker coordinate={ride.location} title={ride.driverName} description={`${ride.status} - ${ride.etaMinutes} mins ETA`} pinColor={colors.accent} />
           {origin ? <Marker coordinate={origin} title="Pickup Point" description={ride.studentName} pinColor={colors.success} /> : null}
           {destination ? <Marker coordinate={destination} title="Drop-off Point" description="School destination" pinColor={colors.plum} /> : null}

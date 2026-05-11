@@ -48,6 +48,7 @@ class ParentController extends ApiController
                 $input['dropoff_address'] ?? $input['dropoffAddress'] ?? '',
                 $input['medical_notes'] ?? $input['notes'] ?? null,
             ]);
+            $this->notifyUser((int) $user['id'], 'Student added', 'A student account was linked to your profile.', 'student', $userId);
             $this->pdo->commit();
 
             Response::json(['success' => true, 'message' => 'Student registered.', 'data' => $this->dashboardData($user)], 201);
@@ -57,6 +58,70 @@ class ParentController extends ApiController
             }
             Response::json(['success' => false, 'message' => $exception->getMessage()], 422);
         }
+    }
+
+    public function updateStudent(array $params = []): void
+    {
+        $user = $this->requireUser('parent');
+        $input = $this->input();
+        $studentId = (int) ($params['id'] ?? 0);
+        $stmt = $this->pdo->prepare(
+            'SELECT students.*, users.id AS student_user_id
+             FROM students
+             JOIN parents ON parents.id = students.parent_id
+             JOIN users parent_user ON parent_user.id = parents.user_id
+             JOIN users ON users.id = students.user_id
+             WHERE students.id = ? AND parent_user.id = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$studentId, (int) $user['id']]);
+        $student = $stmt->fetch();
+
+        if (!$student) {
+            Response::json(['success' => false, 'message' => 'Student not found.'], 404);
+        }
+
+        $name = trim((string) ($input['student_name'] ?? $input['studentName'] ?? ''));
+        [$firstName, $lastName] = array_pad(explode(' ', $name, 2), 2, '');
+
+        try {
+            $this->pdo->beginTransaction();
+            $userFields = ['first_name = ?', 'last_name = ?', 'email = ?', 'mobile_number = ?'];
+            $userParams = [
+                $firstName ?: 'Student',
+                $lastName ?: $user['last_name'],
+                $input['email'] ?? 'student-' . $studentId . '@trace.local',
+                $input['mobile_number'] ?? $input['mobileNumber'] ?? 'student-' . $studentId,
+            ];
+
+            if (!empty($input['password'])) {
+                $userFields[] = 'password_hash = ?';
+                $userParams[] = \Core\Auth::hashPassword((string) $input['password']);
+            }
+
+            $userParams[] = (int) $student['student_user_id'];
+            $this->pdo->prepare('UPDATE users SET ' . implode(', ', $userFields) . ' WHERE id = ?')->execute($userParams);
+            $this->pdo->prepare(
+                'UPDATE students SET lrn = ?, school_name = ?, grade_level = ?, pickup_address = ?, dropoff_address = ?, medical_notes = ? WHERE id = ?'
+            )->execute([
+                $input['lrn'] ?? '',
+                $input['school_name'] ?? $input['schoolName'] ?? '',
+                $input['grade_level'] ?? $input['gradeLevel'] ?? '',
+                $input['pickup_address'] ?? $input['pickupAddress'] ?? '',
+                $input['dropoff_address'] ?? $input['dropoffAddress'] ?? '',
+                $input['medical_notes'] ?? $input['notes'] ?? null,
+                $studentId,
+            ]);
+            $this->notifyUser((int) $user['id'], 'Student updated', 'Student profile details were updated.', 'student', $studentId);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            Response::json(['success' => false, 'message' => $exception->getMessage()], 422);
+        }
+
+        Response::json(['success' => true, 'message' => 'Student updated.', 'data' => $this->dashboardData($user)]);
     }
 
     public function createBooking(): void
@@ -82,15 +147,22 @@ class ParentController extends ApiController
                 $input['scheduled_time'] ?? $input['scheduledTime'] ?? date('H:i:s'),
                 $input['trip_type'] ?? $input['tripType'] ?? 'one_way',
                 $input['notes'] ?? null,
-                $driverId ? 'assigned' : 'pending',
+                'pending',
                 $driverId ? (int) $driverId : null,
             ]);
             $bookingId = (int) $this->pdo->lastInsertId();
 
             if ($driverId) {
-                $ride = $this->pdo->prepare('INSERT INTO rides (booking_id, driver_id, ride_status) VALUES (?, ?, ?)');
-                $ride->execute([$bookingId, (int) $driverId, 'assigned']);
+                $driverUser = $this->pdo->prepare('SELECT user_id FROM drivers WHERE id = ? LIMIT 1');
+                $driverUser->execute([(int) $driverId]);
+                $driverUserId = (int) $driverUser->fetchColumn();
+
+                if ($driverUserId) {
+                    $this->notifyUser($driverUserId, 'New booking request', 'A parent selected you for a student trip.', 'booking', $bookingId);
+                }
             }
+
+            $this->notifyUser((int) $user['id'], 'Booking submitted', 'Your booking is waiting for driver approval.', 'booking', $bookingId);
 
             Response::json(['success' => true, 'message' => 'Booking saved.', 'data' => $this->dashboardData($user)], 201);
         } catch (\Throwable $exception) {
@@ -128,7 +200,7 @@ class ParentController extends ApiController
             'students' => $this->studentsForParent($parentId),
             'bookings' => $this->bookingsForParent($parentId),
             'rides' => $this->ridesForParent($parentId),
-            'notifications' => $this->notificationsForUser((int) $user['id']),
+            'notifications' => $this->notificationsForUser((int) $user['id'], $user['role_code']),
             'messages' => $this->messagesForUser((int) $user['id']),
         ];
     }
@@ -209,13 +281,13 @@ class ParentController extends ApiController
         return array_map([$this, 'rideResource'], $stmt->fetchAll());
     }
 
-    private function notificationsForUser(int $userId): array
+    private function notificationsForUser(int $userId, string $role): array
     {
         $stmt = $this->pdo->prepare('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 30');
         $stmt->execute([$userId]);
         return array_map(fn ($item) => [
             'id' => (int) $item['id'],
-            'role' => 'parent',
+            'role' => $role,
             'title' => $item['title'],
             'body' => $item['body'],
             'time' => $item['created_at'],
@@ -225,10 +297,12 @@ class ParentController extends ApiController
     private function messagesForUser(int $userId): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT messages.*, users.first_name, roles.code AS sender_role
+            'SELECT messages.*, users.first_name, roles.code AS sender_role, receiver_roles.code AS receiver_role
              FROM messages
              JOIN users ON users.id = messages.sender_user_id
              JOIN roles ON roles.id = users.role_id
+             JOIN users receiver_users ON receiver_users.id = messages.receiver_user_id
+             JOIN roles receiver_roles ON receiver_roles.id = receiver_users.role_id
              WHERE messages.sender_user_id = ? OR messages.receiver_user_id = ?
              ORDER BY messages.created_at ASC'
         );
@@ -237,7 +311,7 @@ class ParentController extends ApiController
             'id' => (int) $message['id'],
             'senderRole' => $message['sender_role'],
             'senderName' => $message['first_name'],
-            'receiverRole' => '',
+            'receiverRole' => $message['receiver_role'],
             'text' => $message['message_text'],
             'time' => $message['created_at'],
         ], $stmt->fetchAll());
