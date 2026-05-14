@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react';
-import { Alert, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
-import MapView, { Marker, UrlTile } from 'react-native-maps';
+import React, { useState } from 'react';
+import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import AppButton from './AppButton';
+import OpenStreetMapView from './OpenStreetMapView';
 import { colors } from '../theme/colors';
 
 const DEFAULT_COORDINATE = {
@@ -10,7 +10,6 @@ const DEFAULT_COORDINATE = {
 };
 
 export default function AddressPinPicker({ label = 'Address', value, latitude, longitude, onChange }) {
-  const mapRef = useRef(null);
   const [searching, setSearching] = useState(false);
   const coordinate = {
     latitude: Number(latitude) || DEFAULT_COORDINATE.latitude,
@@ -23,17 +22,6 @@ export default function AddressPinPicker({ label = 'Address', value, latitude, l
       latitude: String(nextLatitude),
       longitude: String(nextLongitude),
     });
-  };
-
-  const moveMap = (nextCoordinate) => {
-    mapRef.current?.animateToRegion(
-      {
-        ...nextCoordinate,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      },
-      350
-    );
   };
 
   const reverseGeocode = async (nextCoordinate) => {
@@ -88,7 +76,6 @@ export default function AddressPinPicker({ label = 'Address', value, latitude, l
         latitude: nextCoordinate.latitude,
         longitude: nextCoordinate.longitude,
       });
-      moveMap(nextCoordinate);
     } catch {
       Alert.alert('Pin address', 'Cannot search right now. Check your internet connection and try again.');
     } finally {
@@ -109,34 +96,21 @@ export default function AddressPinPicker({ label = 'Address', value, latitude, l
       />
       <AppButton icon="search-location" label={searching ? 'Searching...' : 'Find Address'} variant="secondary" onPress={geocodeAddress} />
       <View style={styles.mapWrap}>
-        <MapView
-          ref={mapRef}
-          initialRegion={{
-            ...coordinate,
-            latitudeDelta: 0.03,
-            longitudeDelta: 0.03,
-          }}
+        <OpenStreetMapView
+          center={coordinate}
+          markers={[
+            {
+              coordinate,
+              draggable: true,
+              title: 'Pinned address',
+              description: 'Drag or tap the map to update this location',
+            },
+          ]}
+          zoom={16}
           style={styles.map}
-          mapType={Platform.OS === 'android' ? 'none' : 'standard'}
-          onPress={(event) => {
-            const nextCoordinate = event.nativeEvent.coordinate;
-            moveMap(nextCoordinate);
-            reverseGeocode(nextCoordinate);
-          }}
-        >
-          <UrlTile urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maximumZ={19} flipY={false} />
-          <Marker
-            coordinate={coordinate}
-            draggable
-            title="Pinned address"
-            description="Drag or tap the map to update this location"
-            onDragEnd={(event) => {
-              const nextCoordinate = event.nativeEvent.coordinate;
-              moveMap(nextCoordinate);
-              reverseGeocode(nextCoordinate);
-            }}
-          />
-        </MapView>
+          onMapPress={reverseGeocode}
+          onMarkerDragEnd={reverseGeocode}
+        />
       </View>
       <Text style={styles.coords}>
         Lat {Number(coordinate.latitude).toFixed(6)} / Long {Number(coordinate.longitude).toFixed(6)}

@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { PermissionsAndroid, Platform, StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker, Polyline, UrlTile } from 'react-native-maps';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import HeaderBlock from '../../components/HeaderBlock';
 import InfoRow from '../../components/InfoRow';
+import OpenStreetMapView from '../../components/OpenStreetMapView';
 import Pill from '../../components/Pill';
 import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
@@ -13,30 +13,15 @@ import { colors } from '../../theme/colors';
 
 export default function ActiveRideMapScreen({ navigation }) {
   const { currentRole, rides, refreshDashboard, setTrackingActive, advanceRideSimulation, resetRideSimulation, pushRideLocation, trackRide } = useAppContext();
-  const [locationAllowed, setLocationAllowed] = useState(Platform.OS !== 'android');
   const [refreshing, setRefreshing] = useState(false);
   const [roadRoute, setRoadRoute] = useState([]);
   const ride = rides[0];
-  const mapRef = useRef(null);
   const origin = ride?.pickupLocation || ride?.routePoints?.[0];
   const destination = ride?.dropoffLocation || ride?.routePoints?.[ride?.routePoints?.length - 1];
   const routePoints = roadRoute.length ? roadRoute : ride?.routePoints?.length ? ride.routePoints : [];
   const completedRoute = routePoints.slice(0, (ride?.currentPointIndex || 0) + 1);
   const remainingRoute = routePoints.slice(ride?.currentPointIndex || 0);
   const progressPercent = Math.round((ride?.progress || 0) * 100);
-
-  useEffect(() => {
-    const requestPermission = async () => {
-      if (Platform.OS !== 'android') {
-        return;
-      }
-
-      const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
-      setLocationAllowed(granted === PermissionsAndroid.RESULTS.GRANTED);
-    };
-
-    requestPermission();
-  }, []);
 
   useEffect(() => {
     if (!origin || !destination) {
@@ -53,10 +38,6 @@ export default function ActiveRideMapScreen({ navigation }) {
 
         if (!cancelled && points.length) {
           setRoadRoute(points);
-          mapRef.current?.fitToCoordinates(points, {
-            edgePadding: { top: 70, right: 40, bottom: 70, left: 40 },
-            animated: true,
-          });
         }
       } catch {
         if (!cancelled) {
@@ -94,20 +75,6 @@ export default function ActiveRideMapScreen({ navigation }) {
     return () => clearInterval(timer);
   }, [advanceRideSimulation, currentRole, pushRideLocation, ride?.id, ride?.isTracking, ride?.location, trackRide]);
 
-  useEffect(() => {
-    if (!ride?.location) {
-      return;
-    }
-
-    mapRef.current?.animateToRegion(
-      {
-        ...ride.location,
-        latitudeDelta: 0.018,
-        longitudeDelta: 0.018,
-      },
-      450
-    );
-  }, [ride?.location]);
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -134,14 +101,19 @@ export default function ActiveRideMapScreen({ navigation }) {
       />
 
       <View style={styles.mapWrap}>
-        <MapView ref={mapRef} initialRegion={ride.location} style={styles.map} mapType={Platform.OS === 'android' ? 'none' : 'standard'} showsUserLocation={locationAllowed}>
-          <UrlTile urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maximumZ={19} flipY={false} />
-          <Marker coordinate={ride.location} title={ride.driverName} description={`${ride.status} - ${ride.etaMinutes} mins ETA`} pinColor={colors.accent} />
-          {origin ? <Marker coordinate={origin} title="Pickup Point" description={ride.studentName} pinColor={colors.success} /> : null}
-          {destination ? <Marker coordinate={destination} title="Drop-off Point" description="School destination" pinColor={colors.plum} /> : null}
-          {remainingRoute.length ? <Polyline coordinates={remainingRoute} strokeWidth={5} strokeColor={colors.line} /> : null}
-          {completedRoute.length ? <Polyline coordinates={completedRoute} strokeWidth={6} strokeColor={colors.deep} /> : null}
-        </MapView>
+        <OpenStreetMapView
+          center={ride.location}
+          style={styles.map}
+          markers={[
+            { coordinate: ride.location, title: ride.driverName, description: `${ride.status} - ${ride.etaMinutes} mins ETA` },
+            origin ? { coordinate: origin, title: 'Pickup Point', description: ride.studentName } : null,
+            destination ? { coordinate: destination, title: 'Drop-off Point', description: 'School destination' } : null,
+          ].filter(Boolean)}
+          polylines={[
+            remainingRoute.length ? { coordinates: remainingRoute, color: colors.line, width: 5 } : null,
+            completedRoute.length ? { coordinates: completedRoute, color: colors.deep, width: 6 } : null,
+          ].filter(Boolean)}
+        />
       </View>
 
       <SectionCard title={`${ride.studentName} - ${ride.vehicle}`} subtitle="Shared trip summary" icon="route">

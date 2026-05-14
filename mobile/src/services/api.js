@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://192.168.69.158/trace/TRACE/backend/index.php';
+const API_BASE_URL = 'http://192.168.1.2/trace/TRACE/backend/index.php';
 const REQUEST_TIMEOUT_MS = 15000;
 
 async function request(path, { method = 'GET', token, body } = {}) {
