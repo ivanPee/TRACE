@@ -162,12 +162,63 @@ class DriverController extends ApiController
     {
         $user = $this->requireUser('driver');
         $input = $this->input();
+        $driver = $this->driverByUser((int) $user['id']);
+        $rideId = (int) ($params['id'] ?? 0);
         $newDriverId = (int) ($input['driver_id'] ?? $input['driverId'] ?? 0);
 
-        $this->pdo->prepare('UPDATE rides SET driver_id = ? WHERE id = ?')->execute([$newDriverId, (int) ($params['id'] ?? 0)]);
-        $this->pdo->prepare(
-            'UPDATE bookings JOIN rides ON rides.booking_id = bookings.id SET bookings.assigned_driver_id = ? WHERE rides.id = ?'
-        )->execute([$newDriverId, (int) ($params['id'] ?? 0)]);
+        if (!$newDriverId || $newDriverId === (int) $driver['id']) {
+            Response::json(['success' => false, 'message' => 'Select another driver for transfer.'], 422);
+        }
+
+        $rideStmt = $this->pdo->prepare('SELECT booking_id FROM rides WHERE id = ? AND driver_id = ? LIMIT 1');
+        $rideStmt->execute([$rideId, (int) $driver['id']]);
+        $bookingId = (int) $rideStmt->fetchColumn();
+
+        if (!$bookingId) {
+            Response::json(['success' => false, 'message' => 'Ride is not assigned to this driver.'], 404);
+        }
+
+        $newDriverStmt = $this->pdo->prepare(
+            'SELECT drivers.id, drivers.user_id, users.first_name, users.last_name
+             FROM drivers
+             JOIN users ON users.id = drivers.user_id
+             WHERE drivers.id = ? AND drivers.approval_status = "approved" AND users.status = "active"
+             LIMIT 1'
+        );
+        $newDriverStmt->execute([$newDriverId]);
+        $newDriver = $newDriverStmt->fetch();
+
+        if (!$newDriver) {
+            Response::json(['success' => false, 'message' => 'Target driver is not available.'], 422);
+        }
+
+        try {
+            $this->pdo->beginTransaction();
+            $this->pdo->prepare('UPDATE rides SET driver_id = ? WHERE id = ?')->execute([$newDriverId, $rideId]);
+            $this->pdo->prepare(
+                'UPDATE bookings SET assigned_driver_id = ? WHERE id = ?'
+            )->execute([$newDriverId, $bookingId]);
+
+            $transferText = 'Ride transfer completed. You can coordinate here if handoff details are needed.';
+            $this->pdo->prepare(
+                'INSERT INTO messages (sender_user_id, receiver_user_id, ride_id, message_text, message_type)
+                 VALUES (?, ?, ?, ?, "system")'
+            )->execute([(int) $user['id'], (int) $newDriver['user_id'], $rideId, $transferText]);
+            $this->notifyUser((int) $newDriver['user_id'], 'Booking transferred', 'A booking was transferred to you.', 'booking', $bookingId);
+            $this->notifyUser((int) $user['id'], 'Booking transferred', 'The booking was transferred to ' . trim($newDriver['first_name'] . ' ' . $newDriver['last_name']) . '.', 'booking', $bookingId);
+            $parentUserId = $this->parentUserIdForBooking($bookingId);
+
+            if ($parentUserId) {
+                $this->notifyUser($parentUserId, 'Driver changed', 'Your booking was transferred to another approved driver.', 'booking', $bookingId);
+            }
+
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            Response::json(['success' => false, 'message' => $exception->getMessage()], 422);
+        }
 
         Response::json(['success' => true, 'message' => 'Driver transfer completed.', 'data' => $this->driverData($user)]);
     }
@@ -176,9 +227,12 @@ class DriverController extends ApiController
     {
         $driver = $this->driverByUser((int) $user['id']);
         $stmt = $this->pdo->prepare(
-            'SELECT rides.*, bookings.pickup_address, bookings.dropoff_address, su.first_name AS student_first_name, su.last_name AS student_last_name,
+            'SELECT rides.*, bookings.pickup_address, bookings.dropoff_address,
+                bookings.pickup_latitude, bookings.pickup_longitude, bookings.dropoff_latitude, bookings.dropoff_longitude,
+                su.id AS student_user_id, su.first_name AS student_first_name, su.last_name AS student_last_name,
                 bookings.scheduled_date, bookings.scheduled_time, bookings.trip_type, bookings.booking_status,
-                pu.first_name AS parent_first_name, pu.last_name AS parent_last_name, du.first_name AS driver_first_name, du.last_name AS driver_last_name,
+                pu.id AS parent_user_id, pu.first_name AS parent_first_name, pu.last_name AS parent_last_name,
+                du.id AS driver_user_id, du.first_name AS driver_first_name, du.last_name AS driver_last_name,
                 drivers.vehicle_model, drivers.vehicle_plate_number, drivers.current_latitude, drivers.current_longitude
              FROM rides
              JOIN bookings ON bookings.id = rides.booking_id
@@ -192,36 +246,7 @@ class DriverController extends ApiController
              ORDER BY rides.updated_at DESC'
         );
         $stmt->execute([(int) $driver['id']]);
-        $rides = array_map(fn ($ride) => [
-            'id' => (int) $ride['id'],
-            'bookingId' => (int) $ride['booking_id'],
-            'studentName' => trim($ride['student_first_name'] . ' ' . $ride['student_last_name']),
-            'parentName' => trim($ride['parent_first_name'] . ' ' . $ride['parent_last_name']),
-            'driverName' => trim($ride['driver_first_name'] . ' ' . $ride['driver_last_name']),
-            'vehicle' => trim($ride['vehicle_model'] . ' - ' . $ride['vehicle_plate_number']),
-            'status' => ucwords(str_replace('_', ' ', $ride['ride_status'])),
-            'pickupAddress' => $ride['pickup_address'],
-            'dropoffAddress' => $ride['dropoff_address'],
-            'scheduledDate' => $ride['scheduled_date'],
-            'scheduledTime' => substr((string) $ride['scheduled_time'], 0, 5),
-            'tripType' => $ride['trip_type'],
-            'etaMinutes' => 0,
-            'distanceKm' => 0,
-            'pickupTime' => $ride['started_at'] ?: '',
-            'dropoffTime' => $ride['dropped_off_at'] ?: '',
-            'progress' => $ride['ride_status'] === 'completed' ? 1 : 0,
-            'currentPointIndex' => 0,
-            'isTracking' => !empty($ride['started_at']) && empty($ride['completed_at']),
-            'location' => [
-                'latitude' => (float) ($ride['current_latitude'] ?: 10.6765),
-                'longitude' => (float) ($ride['current_longitude'] ?: 122.9509),
-                'latitudeDelta' => 0.03,
-                'longitudeDelta' => 0.03,
-            ],
-            'routePoints' => [
-                ['latitude' => (float) ($ride['current_latitude'] ?: 10.6765), 'longitude' => (float) ($ride['current_longitude'] ?: 122.9509)],
-            ],
-        ], $stmt->fetchAll());
+        $rides = array_map([$this, 'rideResource'], $stmt->fetchAll());
 
         $pending = $this->pendingBookingsForDriver((int) $driver['id']);
 
@@ -338,7 +363,9 @@ class DriverController extends ApiController
     private function messagesForUser(int $userId): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT messages.*, users.first_name, roles.code AS sender_role, receiver_roles.code AS receiver_role
+            'SELECT messages.*, users.first_name, users.last_name, roles.code AS sender_role,
+                receiver_users.first_name AS receiver_first_name, receiver_users.last_name AS receiver_last_name,
+                receiver_roles.code AS receiver_role
              FROM messages
              JOIN users ON users.id = messages.sender_user_id
              JOIN roles ON roles.id = users.role_id
@@ -350,12 +377,55 @@ class DriverController extends ApiController
         $stmt->execute([$userId, $userId]);
         return array_map(fn ($message) => [
             'id' => (int) $message['id'],
+            'rideId' => $message['ride_id'] ? (int) $message['ride_id'] : null,
+            'senderUserId' => (int) $message['sender_user_id'],
             'senderRole' => $message['sender_role'],
-            'senderName' => $message['first_name'],
+            'senderName' => trim($message['first_name'] . ' ' . $message['last_name']),
+            'receiverUserId' => (int) $message['receiver_user_id'],
             'receiverRole' => $message['receiver_role'],
+            'receiverName' => trim($message['receiver_first_name'] . ' ' . $message['receiver_last_name']),
             'text' => $message['message_text'],
             'time' => $message['created_at'],
         ], $stmt->fetchAll());
+    }
+
+    private function rideResource(array $ride): array
+    {
+        $driverLat = (float) ($ride['current_latitude'] ?: $ride['pickup_latitude'] ?: 10.6765);
+        $driverLng = (float) ($ride['current_longitude'] ?: $ride['pickup_longitude'] ?: 122.9509);
+        $pickupLat = (float) ($ride['pickup_latitude'] ?: 10.676344);
+        $pickupLng = (float) ($ride['pickup_longitude'] ?: 122.953221);
+        $dropoffLat = (float) ($ride['dropoff_latitude'] ?: 10.668364);
+        $dropoffLng = (float) ($ride['dropoff_longitude'] ?: 123.019768);
+
+        return [
+            'id' => (int) $ride['id'],
+            'bookingId' => (int) $ride['booking_id'],
+            'studentUserId' => (int) $ride['student_user_id'],
+            'parentUserId' => (int) $ride['parent_user_id'],
+            'driverUserId' => (int) $ride['driver_user_id'],
+            'studentName' => trim($ride['student_first_name'] . ' ' . $ride['student_last_name']),
+            'parentName' => trim($ride['parent_first_name'] . ' ' . $ride['parent_last_name']),
+            'driverName' => trim($ride['driver_first_name'] . ' ' . $ride['driver_last_name']),
+            'vehicle' => trim($ride['vehicle_model'] . ' - ' . $ride['vehicle_plate_number']),
+            'status' => ucwords(str_replace('_', ' ', $ride['ride_status'])),
+            'pickupAddress' => $ride['pickup_address'],
+            'dropoffAddress' => $ride['dropoff_address'],
+            'scheduledDate' => $ride['scheduled_date'],
+            'scheduledTime' => substr((string) $ride['scheduled_time'], 0, 5),
+            'tripType' => $ride['trip_type'],
+            'etaMinutes' => 0,
+            'distanceKm' => 0,
+            'pickupTime' => $ride['started_at'] ?: '',
+            'dropoffTime' => $ride['dropped_off_at'] ?: '',
+            'progress' => $ride['ride_status'] === 'completed' ? 1 : 0,
+            'currentPointIndex' => 0,
+            'isTracking' => !empty($ride['started_at']) && empty($ride['completed_at']),
+            'location' => ['latitude' => $driverLat, 'longitude' => $driverLng, 'latitudeDelta' => 0.03, 'longitudeDelta' => 0.03],
+            'pickupLocation' => ['latitude' => $pickupLat, 'longitude' => $pickupLng],
+            'dropoffLocation' => ['latitude' => $dropoffLat, 'longitude' => $dropoffLng],
+            'routePoints' => [['latitude' => $pickupLat, 'longitude' => $pickupLng], ['latitude' => $dropoffLat, 'longitude' => $dropoffLng]],
+        ];
     }
 }
 

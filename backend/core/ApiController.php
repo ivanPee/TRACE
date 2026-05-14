@@ -109,6 +109,8 @@ class ApiController
 
             if ($parent) {
                 $resource['address'] = $parent['address'];
+                $resource['addressLatitude'] = $parent['address_latitude'] !== null ? (float) $parent['address_latitude'] : null;
+                $resource['addressLongitude'] = $parent['address_longitude'] !== null ? (float) $parent['address_longitude'] : null;
                 $resource['validIdPath'] = $parent['valid_id_path'];
                 $resource['emergencyContactName'] = $parent['emergency_contact_name'];
                 $resource['emergencyContactNumber'] = $parent['emergency_contact_number'];
@@ -131,6 +133,22 @@ class ApiController
                 $resource['vehicleOrcrPath'] = $driver['vehicle_photo_path'];
                 $resource['approvalStatus'] = $driver['approval_status'];
                 $resource['isOnline'] = (bool) $driver['is_online'];
+            }
+        }
+
+        if ($user['role_code'] === 'student') {
+            $stmt = $this->pdo->prepare('SELECT * FROM students WHERE user_id = ? LIMIT 1');
+            $stmt->execute([(int) $user['id']]);
+            $student = $stmt->fetch();
+
+            if ($student) {
+                $resource['studentId'] = (int) $student['id'];
+                $resource['parentId'] = (int) $student['parent_id'];
+                $resource['lrn'] = $student['lrn'];
+                $resource['schoolName'] = $student['school_name'];
+                $resource['gradeLevel'] = $student['grade_level'];
+                $resource['pickupAddress'] = $student['pickup_address'];
+                $resource['dropoffAddress'] = $student['dropoff_address'];
             }
         }
 

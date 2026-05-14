@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { Text } from 'react-native';
 import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import FormInput from '../../components/FormInput';
 import HeaderBlock from '../../components/HeaderBlock';
+import InfoRow from '../../components/InfoRow';
 import Pill from '../../components/Pill';
 import Screen from '../../components/Screen';
 import SectionCard from '../../components/SectionCard';
 import { useAppContext } from '../../context/AppContext';
 
 export default function StudentsScreen({ navigation }) {
-  const { currentRole, students, updateStudent } = useAppContext();
+  const { currentRole, students, updateStudent, refreshDashboard } = useAppContext();
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({});
+  const [refreshing, setRefreshing] = useState(false);
   const isParent = currentRole === 'parent';
   const startEdit = (student) => {
     setEditingId(student.id);
@@ -32,9 +33,17 @@ export default function StudentsScreen({ navigation }) {
     await updateStudent(studentId, form);
     setEditingId(null);
   };
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshDashboard();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
-    <Screen bottomBar={<AppNavBar navigation={navigation} active="students" />}>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active="students" />} refreshing={refreshing} onRefresh={handleRefresh}>
       <HeaderBlock
         eyebrow={isParent ? 'Student Accounts' : 'Assigned Students'}
         title={isParent ? 'Linked students under the parent account.' : 'Children assigned to this driver route.'}
@@ -42,7 +51,7 @@ export default function StudentsScreen({ navigation }) {
       />
 
       {students.map((student) => (
-        <SectionCard key={student.id} title={student.name} subtitle={`${student.schoolName} - ${student.gradeLevel}`}>
+        <SectionCard key={student.id} title={student.name} subtitle={`${student.schoolName} - ${student.gradeLevel}`} icon="child">
           {editingId === student.id ? (
             <>
               <FormInput label="Student Name" value={form.studentName} onChangeText={(value) => updateField('studentName', value)} placeholder="Student name" />
@@ -52,22 +61,22 @@ export default function StudentsScreen({ navigation }) {
               <FormInput label="Pickup Address" value={form.pickupAddress} onChangeText={(value) => updateField('pickupAddress', value)} placeholder="Pickup address" multiline />
               <FormInput label="Drop-off Address" value={form.dropoffAddress} onChangeText={(value) => updateField('dropoffAddress', value)} placeholder="Drop-off address" multiline />
               <FormInput label="New Password" value={form.password} onChangeText={(value) => updateField('password', value)} placeholder="Leave blank to keep current password" secureTextEntry />
-              <AppButton label="Save Student" onPress={() => saveStudent(student.id)} />
-              <AppButton label="Cancel" variant="ghost" onPress={() => setEditingId(null)} />
+              <AppButton icon="save" label="Save Student" onPress={() => saveStudent(student.id)} />
+              <AppButton icon="times" label="Cancel" variant="ghost" onPress={() => setEditingId(null)} />
             </>
           ) : (
             <>
               <Pill label={`LRN: ${student.lrn}`} />
-              <Text>Pickup: {student.pickupAddress}</Text>
-              <Text>Drop-off: {student.dropoffAddress}</Text>
-              <Text>Emergency Contact: {student.emergencyContact}</Text>
-              {isParent ? <AppButton label="Edit Student" variant="ghost" onPress={() => startEdit(student)} /> : null}
+              <InfoRow icon="map-marker-alt" label="Pickup" value={student.pickupAddress} />
+              <InfoRow icon="flag-checkered" label="Drop-off" value={student.dropoffAddress} />
+              <InfoRow icon="phone-alt" label="Emergency Contact" value={student.emergencyContact} />
+              {isParent ? <AppButton icon="edit" label="Edit Student" variant="ghost" onPress={() => startEdit(student)} /> : null}
             </>
           )}
         </SectionCard>
       ))}
 
-      {isParent ? <AppButton label="Add Student Account" onPress={() => navigation.navigate('AddStudent')} /> : null}
+      {isParent ? <AppButton icon="user-plus" label="Add Student Account" onPress={() => navigation.navigate('AddStudent')} /> : null}
     </Screen>
   );
 }

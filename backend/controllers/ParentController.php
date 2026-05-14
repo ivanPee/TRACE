@@ -134,15 +134,20 @@ class ParentController extends ApiController
 
         try {
             $driverId = $input['driver_id'] ?? $input['driverId'] ?? null;
+            $coordinate = static fn ($value) => trim((string) $value) === '' ? null : (float) $value;
             $stmt = $this->pdo->prepare(
-                'INSERT INTO bookings (parent_id, student_id, pickup_address, dropoff_address, scheduled_date, scheduled_time, trip_type, notes, booking_status, assigned_driver_id)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                'INSERT INTO bookings (parent_id, student_id, pickup_address, dropoff_address, pickup_latitude, pickup_longitude, dropoff_latitude, dropoff_longitude, scheduled_date, scheduled_time, trip_type, notes, booking_status, assigned_driver_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             );
             $stmt->execute([
                 $parentId,
                 (int) ($input['student_id'] ?? $input['studentId'] ?? 0),
                 $input['pickup_address'] ?? $input['pickupAddress'] ?? '',
                 $input['dropoff_address'] ?? $input['dropoffAddress'] ?? '',
+                $coordinate($input['pickup_latitude'] ?? $input['pickupLatitude'] ?? null),
+                $coordinate($input['pickup_longitude'] ?? $input['pickupLongitude'] ?? null),
+                $coordinate($input['dropoff_latitude'] ?? $input['dropoffLatitude'] ?? null),
+                $coordinate($input['dropoff_longitude'] ?? $input['dropoffLongitude'] ?? null),
                 $input['scheduled_date'] ?? $input['scheduledDate'] ?? date('Y-m-d'),
                 $input['scheduled_time'] ?? $input['scheduledTime'] ?? date('H:i:s'),
                 $input['trip_type'] ?? $input['tripType'] ?? 'one_way',
@@ -262,8 +267,11 @@ class ParentController extends ApiController
     private function ridesForParent(int $parentId): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT rides.*, bookings.pickup_address, bookings.dropoff_address, su.first_name AS student_first_name, su.last_name AS student_last_name,
-                pu.first_name AS parent_first_name, pu.last_name AS parent_last_name, du.first_name AS driver_first_name, du.last_name AS driver_last_name,
+            'SELECT rides.*, bookings.pickup_address, bookings.dropoff_address,
+                bookings.pickup_latitude, bookings.pickup_longitude, bookings.dropoff_latitude, bookings.dropoff_longitude,
+                su.id AS student_user_id, su.first_name AS student_first_name, su.last_name AS student_last_name,
+                pu.id AS parent_user_id, pu.first_name AS parent_first_name, pu.last_name AS parent_last_name,
+                du.id AS driver_user_id, du.first_name AS driver_first_name, du.last_name AS driver_last_name,
                 drivers.vehicle_model, drivers.vehicle_plate_number, drivers.current_latitude, drivers.current_longitude
              FROM rides
              JOIN bookings ON bookings.id = rides.booking_id
@@ -297,7 +305,9 @@ class ParentController extends ApiController
     private function messagesForUser(int $userId): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT messages.*, users.first_name, roles.code AS sender_role, receiver_roles.code AS receiver_role
+            'SELECT messages.*, users.first_name, users.last_name, roles.code AS sender_role,
+                receiver_users.first_name AS receiver_first_name, receiver_users.last_name AS receiver_last_name,
+                receiver_roles.code AS receiver_role
              FROM messages
              JOIN users ON users.id = messages.sender_user_id
              JOIN roles ON roles.id = users.role_id
@@ -309,9 +319,13 @@ class ParentController extends ApiController
         $stmt->execute([$userId, $userId]);
         return array_map(fn ($message) => [
             'id' => (int) $message['id'],
+            'rideId' => $message['ride_id'] ? (int) $message['ride_id'] : null,
+            'senderUserId' => (int) $message['sender_user_id'],
             'senderRole' => $message['sender_role'],
-            'senderName' => $message['first_name'],
+            'senderName' => trim($message['first_name'] . ' ' . $message['last_name']),
+            'receiverUserId' => (int) $message['receiver_user_id'],
             'receiverRole' => $message['receiver_role'],
+            'receiverName' => trim($message['receiver_first_name'] . ' ' . $message['receiver_last_name']),
             'text' => $message['message_text'],
             'time' => $message['created_at'],
         ], $stmt->fetchAll());
@@ -319,9 +333,19 @@ class ParentController extends ApiController
 
     private function rideResource(array $ride): array
     {
+        $driverLat = (float) ($ride['current_latitude'] ?: $ride['pickup_latitude'] ?: 10.6765);
+        $driverLng = (float) ($ride['current_longitude'] ?: $ride['pickup_longitude'] ?: 122.9509);
+        $pickupLat = (float) ($ride['pickup_latitude'] ?: 10.676344);
+        $pickupLng = (float) ($ride['pickup_longitude'] ?: 122.953221);
+        $dropoffLat = (float) ($ride['dropoff_latitude'] ?: 10.668364);
+        $dropoffLng = (float) ($ride['dropoff_longitude'] ?: 123.019768);
+
         return [
             'id' => (int) $ride['id'],
             'bookingId' => (int) $ride['booking_id'],
+            'studentUserId' => (int) $ride['student_user_id'],
+            'parentUserId' => (int) $ride['parent_user_id'],
+            'driverUserId' => (int) $ride['driver_user_id'],
             'studentName' => trim($ride['student_first_name'] . ' ' . $ride['student_last_name']),
             'parentName' => trim($ride['parent_first_name'] . ' ' . $ride['parent_last_name']),
             'driverName' => trim($ride['driver_first_name'] . ' ' . $ride['driver_last_name']),
@@ -335,13 +359,16 @@ class ParentController extends ApiController
             'currentPointIndex' => 0,
             'isTracking' => !empty($ride['started_at']) && empty($ride['completed_at']),
             'location' => [
-                'latitude' => (float) ($ride['current_latitude'] ?: 10.6765),
-                'longitude' => (float) ($ride['current_longitude'] ?: 122.9509),
+                'latitude' => $driverLat,
+                'longitude' => $driverLng,
                 'latitudeDelta' => 0.03,
                 'longitudeDelta' => 0.03,
             ],
+            'pickupLocation' => ['latitude' => $pickupLat, 'longitude' => $pickupLng],
+            'dropoffLocation' => ['latitude' => $dropoffLat, 'longitude' => $dropoffLng],
             'routePoints' => [
-                ['latitude' => (float) ($ride['current_latitude'] ?: 10.6765), 'longitude' => (float) ($ride['current_longitude'] ?: 122.9509)],
+                ['latitude' => $pickupLat, 'longitude' => $pickupLng],
+                ['latitude' => $dropoffLat, 'longitude' => $dropoffLng],
             ],
         ];
     }

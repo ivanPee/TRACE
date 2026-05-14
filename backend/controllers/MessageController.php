@@ -17,13 +17,22 @@ class MessageController extends ApiController
             Response::json(['success' => false, 'message' => 'Message cannot be empty.'], 422);
         }
 
-        $receiverId = $this->receiverForUser($user);
+        $receiverId = (int) ($input['receiver_user_id'] ?? $input['receiverUserId'] ?? 0);
+        $rideId = (int) ($input['ride_id'] ?? $input['rideId'] ?? 0);
+
+        if ($receiverId && !$this->canMessageUser($user, $receiverId, $rideId ?: null)) {
+            Response::json(['success' => false, 'message' => 'You cannot message that user for this trip.'], 403);
+        }
+
+        if (!$receiverId) {
+            $receiverId = $this->receiverForUser($user);
+        }
 
         if (!$receiverId) {
             Response::json(['success' => false, 'message' => 'No conversation target is available yet.'], 422);
         }
 
-        $rideId = $this->latestRideIdForUser($user);
+        $rideId = $rideId ?: $this->latestRideIdForUser($user);
         $stmt = $this->pdo->prepare(
             'INSERT INTO messages (sender_user_id, receiver_user_id, ride_id, message_text)
              VALUES (?, ?, ?, ?)'
@@ -70,14 +79,71 @@ class MessageController extends ApiController
             return $id ? (int) $id : null;
         }
 
+        if ($user['role_code'] === 'student') {
+            $stmt = $this->pdo->prepare(
+                'SELECT pu.id
+                 FROM students
+                 JOIN parents ON parents.id = students.parent_id
+                 JOIN users pu ON pu.id = parents.user_id
+                 WHERE students.user_id = ?
+                 LIMIT 1'
+            );
+            $stmt->execute([(int) $user['id']]);
+            $id = $stmt->fetchColumn();
+
+            return $id ? (int) $id : null;
+        }
+
         return null;
+    }
+
+    private function canMessageUser(array $user, int $receiverId, ?int $rideId): bool
+    {
+        if ((int) $user['id'] === $receiverId) {
+            return false;
+        }
+
+        if ($rideId) {
+            $stmt = $this->pdo->prepare(
+                'SELECT 1
+                 FROM rides
+                 JOIN bookings ON bookings.id = rides.booking_id
+                 JOIN parents ON parents.id = bookings.parent_id
+                 JOIN students ON students.id = bookings.student_id
+                 JOIN drivers ON drivers.id = rides.driver_id
+                 WHERE rides.id = ?
+                   AND ? IN (parents.user_id, students.user_id, drivers.user_id)
+                   AND ? IN (parents.user_id, students.user_id, drivers.user_id)
+                 LIMIT 1'
+            );
+            $stmt->execute([$rideId, (int) $user['id'], $receiverId]);
+
+            if ($stmt->fetchColumn()) {
+                return true;
+            }
+        }
+
+        $conversation = $this->pdo->prepare(
+            'SELECT 1 FROM messages
+             WHERE (sender_user_id = ? AND receiver_user_id = ?)
+                OR (sender_user_id = ? AND receiver_user_id = ?)
+             LIMIT 1'
+        );
+        $conversation->execute([(int) $user['id'], $receiverId, $receiverId, (int) $user['id']]);
+
+        return (bool) $conversation->fetchColumn();
     }
 
     private function latestRideIdForUser(array $user): ?int
     {
-        $join = $user['role_code'] === 'driver'
-            ? 'JOIN drivers ON drivers.id = rides.driver_id AND drivers.user_id = ?'
-            : 'JOIN bookings ON bookings.id = rides.booking_id JOIN parents ON parents.id = bookings.parent_id AND parents.user_id = ?';
+        if ($user['role_code'] === 'driver') {
+            $join = 'JOIN drivers ON drivers.id = rides.driver_id AND drivers.user_id = ?';
+        } elseif ($user['role_code'] === 'student') {
+            $join = 'JOIN bookings ON bookings.id = rides.booking_id JOIN students ON students.id = bookings.student_id AND students.user_id = ?';
+        } else {
+            $join = 'JOIN bookings ON bookings.id = rides.booking_id JOIN parents ON parents.id = bookings.parent_id AND parents.user_id = ?';
+        }
+
         $stmt = $this->pdo->prepare(
             'SELECT rides.id
              FROM rides ' . $join . '

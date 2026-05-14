@@ -5,6 +5,7 @@ use Controllers\DriverController;
 use Controllers\MessageController;
 use Controllers\ParentController;
 use Controllers\RideController;
+use Controllers\StudentController;
 use Core\Request;
 use Core\Response;
 
@@ -15,6 +16,7 @@ $routes = [
     ['GET', '/api/me', [AuthController::class, 'me']],
     ['POST', '/api/profile', [AuthController::class, 'updateProfile']],
     ['GET', '/api/parent/dashboard', [ParentController::class, 'dashboard']],
+    ['GET', '/api/student/dashboard', [StudentController::class, 'dashboard']],
     ['GET', '/api/drivers', [ParentController::class, 'drivers']],
     ['POST', '/api/parents/students', [ParentController::class, 'createStudent']],
     ['POST', '/api/parents/students/{id}', [ParentController::class, 'updateStudent']],

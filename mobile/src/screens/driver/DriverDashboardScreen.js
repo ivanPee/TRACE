@@ -41,19 +41,19 @@ export default function DriverDashboardScreen({ navigation }) {
 
       <StatGrid
         items={[
-          { label: 'Assigned Trips', value: bookings.length },
-          { label: 'Active Rides', value: rides.length },
-          { label: 'ETA', value: ride ? `${ride.etaMinutes}m` : '-' },
-          { label: 'Requests', value: pendingBookings.length },
+          { label: 'Assigned Trips', value: bookings.length, icon: 'calendar-alt' },
+          { label: 'Active Rides', value: rides.length, icon: 'route' },
+          { label: 'ETA', value: ride ? `${ride.etaMinutes}m` : '-', icon: 'stopwatch' },
+          { label: 'Requests', value: pendingBookings.length, icon: 'bell' },
         ]}
       />
 
-      <SectionCard title="Availability" subtitle="Parents can see this while choosing a driver.">
+      <SectionCard title="Availability" subtitle="Parents can see this while choosing a driver." icon="broadcast-tower">
         <Pill label={isOnline ? 'Online' : 'Offline'} tone={isOnline ? 'success' : 'warning'} />
-        <AppButton label={isOnline ? 'Go Offline' : 'Go Online'} variant="secondary" onPress={handleAvailability} />
+        <AppButton icon="power-off" label={isOnline ? 'Go Offline' : 'Go Online'} variant="secondary" onPress={handleAvailability} />
       </SectionCard>
 
-      <SectionCard title="Next active ride" subtitle="Use this area to begin a pickup workflow." tone="soft">
+      <SectionCard title="Next active ride" subtitle="Use this area to begin a pickup workflow." tone="soft" icon="car-side">
         {ride ? (
           <>
             <Pill label={ride.status} tone="warning" />
@@ -62,21 +62,22 @@ export default function DriverDashboardScreen({ navigation }) {
             <Text>Pickup Time: {ride.pickupTime}</Text>
             <Text>Vehicle: {ride.vehicle}</Text>
             <Text>Distance left: {ride.distanceKm} km</Text>
-            <AppButton label="Open Trip Controls" onPress={() => navigation.navigate('DriverTrips')} />
+            <AppButton icon="tasks" label="Open Trip Controls" onPress={() => navigation.navigate('DriverTrips')} />
           </>
         ) : (
           <Text>No assigned students yet. Assignments appear after parents select you for a booking.</Text>
         )}
       </SectionCard>
 
-      <SectionCard title="Driver tools">
-        <AppButton label="Open Booking Manager" onPress={() => navigation.navigate('Bookings')} />
-        <AppButton label="Track Live Route" variant="secondary" onPress={() => navigation.navigate('ActiveRideMap')} />
-        <AppButton label="View Transactions" variant="ghost" onPress={() => navigation.navigate('Transactions')} />
-        <AppButton label="Open Notifications" variant="ghost" onPress={() => navigation.navigate('Notifications')} />
-        <AppButton label="Chat with Parent" variant="ghost" onPress={() => navigation.navigate('Chat')} />
-        <AppButton label="View Profile" variant="ghost" onPress={() => navigation.navigate('Profile')} />
+      <SectionCard title="Driver tools" icon="th-large">
+        <AppButton icon="calendar-check" label="Open Booking Manager" onPress={() => navigation.navigate('Bookings')} />
+        <AppButton icon="route" label="Track Live Route" variant="secondary" onPress={() => navigation.navigate('ActiveRideMap')} />
+        <AppButton icon="history" label="View Transactions" variant="ghost" onPress={() => navigation.navigate('Transactions')} />
+        <AppButton icon="bell" label="Open Notifications" variant="ghost" onPress={() => navigation.navigate('Notifications')} />
+        <AppButton icon="comments" label="Chat with Parent" variant="ghost" onPress={() => navigation.navigate('Chat')} />
+        <AppButton icon="user-circle" label="View Profile" variant="ghost" onPress={() => navigation.navigate('Profile')} />
         <AppButton
+          icon="sign-out-alt"
           label="Logout"
           variant="ghost"
           onPress={async () => {

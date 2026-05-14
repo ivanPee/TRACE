@@ -1,11 +1,15 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { colors } from '../theme/colors';
 
-export default function InfoRow({ label, value }) {
+export default function InfoRow({ label, value, icon }) {
   return (
     <View style={styles.row}>
-      <Text style={styles.label}>{label}</Text>
+      <View style={styles.labelGroup}>
+        {icon ? <FontAwesome5 name={icon} size={13} solid color={colors.slate} /> : null}
+        <Text style={styles.label}>{label}</Text>
+      </View>
       <Text style={styles.value}>{value}</Text>
     </View>
   );
@@ -18,8 +22,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 12,
   },
-  label: {
+  labelGroup: {
     flex: 1,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  label: {
     color: colors.slate,
     fontSize: 14,
   },

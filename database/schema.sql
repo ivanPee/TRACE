@@ -14,11 +14,6 @@ INSERT INTO roles (code, name) VALUES
 ('parent', 'Parent'),
 ('student', 'Student');
 
-INSERT INTO users (role_id, first_name, last_name, email, mobile_number, password_hash, status, is_verified)
-SELECT id, 'System', 'Admin', 'admin@trace.test', '09000000000', '$2y$10$TBaiMFxt3f7QqGsSc6g77.nJnilxgjSf4CagE8E0l3J6i3/SiqKR2', 'active', 1
-FROM roles
-WHERE code = 'admin';
-
 -- password
 
 CREATE TABLE users (
@@ -39,10 +34,17 @@ CREATE TABLE users (
     CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
+INSERT INTO users (role_id, first_name, last_name, email, mobile_number, password_hash, status, is_verified)
+SELECT id, 'System', 'Admin', 'admin@trace.test', '09000000000', '$2y$10$TBaiMFxt3f7QqGsSc6g77.nJnilxgjSf4CagE8E0l3J6i3/SiqKR2', 'active', 1
+FROM roles
+WHERE code = 'admin';
+
 CREATE TABLE parents (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL UNIQUE,
     address TEXT NOT NULL,
+    address_latitude DECIMAL(10, 7) NULL,
+    address_longitude DECIMAL(10, 7) NULL,
     valid_id_path VARCHAR(255) NULL,
     emergency_contact_name VARCHAR(150) NOT NULL,
     emergency_contact_number VARCHAR(20) NOT NULL,
@@ -109,6 +111,10 @@ CREATE TABLE bookings (
     student_id BIGINT UNSIGNED NOT NULL,
     pickup_address TEXT NOT NULL,
     dropoff_address TEXT NOT NULL,
+    pickup_latitude DECIMAL(10, 7) NULL,
+    pickup_longitude DECIMAL(10, 7) NULL,
+    dropoff_latitude DECIMAL(10, 7) NULL,
+    dropoff_longitude DECIMAL(10, 7) NULL,
     scheduled_date DATE NOT NULL,
     scheduled_time TIME NOT NULL,
     trip_type ENUM('one_way', 'round_trip', 'recurring') NOT NULL DEFAULT 'one_way',

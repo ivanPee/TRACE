@@ -32,10 +32,13 @@ function AppContextBridge({ children }) {
   const rejectBooking = useCallback((bookingId) => dispatch(appThunks.rejectBooking(bookingId)).unwrap(), [dispatch]);
   const updateDriverAvailability = useCallback((isOnline) => dispatch(appThunks.updateDriverAvailability(isOnline)).unwrap(), [dispatch]);
   const updateRideStatus = useCallback((status) => dispatch(appThunks.updateRideStatus(status)).unwrap(), [dispatch]);
+  const transferRide = useCallback((rideId, driverId) => dispatch(appThunks.transferRide({ rideId, driverId })).unwrap(), [dispatch]);
   const setTrackingActive = useCallback((isTracking) => dispatch(appActions.setTrackingActive(isTracking)), [dispatch]);
   const advanceRideSimulation = useCallback(() => dispatch(appActions.advanceRideSimulation()), [dispatch]);
   const resetRideSimulation = useCallback(() => dispatch(appActions.resetRideSimulation()), [dispatch]);
-  const sendMessage = useCallback((text) => dispatch(appThunks.sendRemoteMessage(text)).unwrap(), [dispatch]);
+  const pushRideLocation = useCallback((location) => dispatch(appThunks.pushRideLocation(location)).unwrap(), [dispatch]);
+  const trackRide = useCallback((rideId) => dispatch(appThunks.trackRide(rideId)).unwrap(), [dispatch]);
+  const sendMessage = useCallback((payload) => dispatch(appThunks.sendRemoteMessage(payload)).unwrap(), [dispatch]);
 
   const value = useMemo(
     () => ({
@@ -53,9 +56,12 @@ function AppContextBridge({ children }) {
       rejectBooking,
       updateDriverAvailability,
       updateRideStatus,
+      transferRide,
       setTrackingActive,
       advanceRideSimulation,
       resetRideSimulation,
+      pushRideLocation,
+      trackRide,
       sendMessage,
     }),
     [
@@ -73,9 +79,12 @@ function AppContextBridge({ children }) {
       rejectBooking,
       updateDriverAvailability,
       updateRideStatus,
+      transferRide,
       setTrackingActive,
       advanceRideSimulation,
       resetRideSimulation,
+      pushRideLocation,
+      trackRide,
       sendMessage,
     ]
   );

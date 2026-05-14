@@ -18,13 +18,16 @@ class AuthController extends ApiController
             $validIdPath = $this->storeUpload('valid_id', 'parents')
                 ?: $this->storeBase64Upload((string) ($input['valid_id_base64'] ?? $input['validIdBase64'] ?? ''), 'parents', 'valid-id.jpg')
                 ?: ($input['valid_id_path'] ?? $input['validIdPath'] ?? null);
+            $coordinate = static fn ($value) => trim((string) $value) === '' ? null : (float) $value;
             $stmt = $this->pdo->prepare(
-                'INSERT INTO parents (user_id, address, valid_id_path, emergency_contact_name, emergency_contact_number)
-                 VALUES (?, ?, ?, ?, ?)'
+                'INSERT INTO parents (user_id, address, address_latitude, address_longitude, valid_id_path, emergency_contact_name, emergency_contact_number)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)'
             );
             $stmt->execute([
                 $userId,
                 $input['address'] ?? '',
+                $coordinate($input['address_latitude'] ?? $input['addressLatitude'] ?? null),
+                $coordinate($input['address_longitude'] ?? $input['addressLongitude'] ?? null),
                 $validIdPath,
                 $input['emergency_contact_name'] ?? $input['emergencyContactName'] ?? 'Emergency contact',
                 $input['emergency_contact_number'] ?? $input['emergencyContactNumber'] ?? ($input['mobile_number'] ?? $input['mobileNumber'] ?? ''),
@@ -163,9 +166,12 @@ class AuthController extends ApiController
             if ($user['role_code'] === 'parent') {
                 $validIdPath = $this->storeUpload('valid_id', 'parents')
                     ?: $this->storeBase64Upload((string) ($input['valid_id_base64'] ?? $input['validIdBase64'] ?? ''), 'parents', 'valid-id.jpg');
-                $parentFields = ['address = ?', 'emergency_contact_name = ?', 'emergency_contact_number = ?'];
+                $coordinate = static fn ($value) => trim((string) $value) === '' ? null : (float) $value;
+                $parentFields = ['address = ?', 'address_latitude = ?', 'address_longitude = ?', 'emergency_contact_name = ?', 'emergency_contact_number = ?'];
                 $parentParams = [
                     $input['address'] ?? '',
+                    $coordinate($input['address_latitude'] ?? $input['addressLatitude'] ?? null),
+                    $coordinate($input['address_longitude'] ?? $input['addressLongitude'] ?? null),
                     $input['emergency_contact_name'] ?? $input['emergencyContactName'] ?? 'Emergency contact',
                     $input['emergency_contact_number'] ?? $input['emergencyContactNumber'] ?? ($input['mobile_number'] ?? $input['mobileNumber'] ?? ''),
                 ];

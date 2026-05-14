@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { colors } from '../theme/colors';
 
 export default function StatGrid({ items }) {
@@ -7,8 +8,17 @@ export default function StatGrid({ items }) {
     <View style={styles.grid}>
       {items.map((item) => (
         <View key={item.label} style={styles.card}>
-          <Text style={styles.value}>{item.value}</Text>
-          <Text style={styles.label}>{item.label}</Text>
+          <View style={styles.surface}>
+            <View style={styles.topLine}>
+              <Text style={styles.value}>{item.value}</Text>
+              {item.icon ? (
+                <View style={styles.iconWrap}>
+                  <FontAwesome5 name={item.icon} size={14} solid color={colors.accent} />
+                </View>
+              ) : null}
+            </View>
+            <Text style={styles.label}>{item.label}</Text>
+          </View>
         </View>
       ))}
     </View>
@@ -27,22 +37,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     marginBottom: 12,
   },
-  value: {
+  surface: {
     backgroundColor: colors.white,
     borderRadius: 20,
-    overflow: 'hidden',
-    paddingTop: 20,
+    paddingVertical: 18,
     paddingHorizontal: 18,
+  },
+  topLine: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  iconWrap: {
+    alignItems: 'center',
+    backgroundColor: '#edf7ff',
+    borderRadius: 12,
+    height: 30,
+    justifyContent: 'center',
+    width: 30,
+  },
+  value: {
     fontSize: 28,
     fontWeight: '800',
     color: colors.ink,
   },
   label: {
-    backgroundColor: colors.white,
-    paddingHorizontal: 18,
-    paddingBottom: 18,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
     color: colors.slate,
     fontSize: 13,
   },

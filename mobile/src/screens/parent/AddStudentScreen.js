@@ -8,7 +8,8 @@ import SectionCard from '../../components/SectionCard';
 import { useAppContext } from '../../context/AppContext';
 
 export default function AddStudentScreen({ navigation }) {
-  const { addStudent } = useAppContext();
+  const { addStudent, refreshDashboard } = useAppContext();
+  const [refreshing, setRefreshing] = useState(false);
   const [form, setForm] = useState({
     studentName: '',
     lrn: '',
@@ -22,12 +23,12 @@ export default function AddStudentScreen({ navigation }) {
 
   const updateField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.studentName || !form.lrn) {
       return;
     }
 
-    addStudent({
+    await addStudent({
       studentName: form.studentName,
       lrn: form.lrn,
       schoolName: form.schoolName,
@@ -40,15 +41,23 @@ export default function AddStudentScreen({ navigation }) {
 
     navigation.goBack();
   };
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshDashboard();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
-    <Screen bottomBar={<AppNavBar navigation={navigation} active="students" />}>
+    <Screen bottomBar={<AppNavBar navigation={navigation} active="students" />} refreshing={refreshing} onRefresh={handleRefresh}>
       <HeaderBlock
         eyebrow="New Student"
         title="Create the student account from the parent side."
         subtitle="In the real backend this should validate that the LRN is unique before saving."
       />
-      <SectionCard>
+      <SectionCard icon="user-plus">
         <FormInput label="Student Name" value={form.studentName} onChangeText={(value) => updateField('studentName', value)} placeholder="Lia Villanueva" />
         <FormInput label="LRN" value={form.lrn} onChangeText={(value) => updateField('lrn', value)} placeholder="112233445566" />
         <FormInput label="School Name" value={form.schoolName} onChangeText={(value) => updateField('schoolName', value)} placeholder="School name" />
@@ -57,7 +66,7 @@ export default function AddStudentScreen({ navigation }) {
         <FormInput label="Drop-off Address" value={form.dropoffAddress} onChangeText={(value) => updateField('dropoffAddress', value)} placeholder="School gate" multiline />
         <FormInput label="Emergency Contact" value={form.emergencyContact} onChangeText={(value) => updateField('emergencyContact', value)} placeholder="Parent mobile number" />
         <FormInput label="Medical Notes" value={form.notes} onChangeText={(value) => updateField('notes', value)} placeholder="Optional notes" multiline />
-        <AppButton label="Save Student Account" onPress={handleSave} />
+        <AppButton icon="save" label="Save Student Account" onPress={handleSave} />
       </SectionCard>
     </Screen>
   );

@@ -20,6 +20,10 @@ export default function BookRideScreen({ navigation }) {
     driverId: firstDriver?.id || '',
     pickupAddress: firstStudent?.pickupAddress || '',
     dropoffAddress: firstStudent?.dropoffAddress || '',
+    pickupLatitude: '',
+    pickupLongitude: '',
+    dropoffLatitude: '',
+    dropoffLongitude: '',
     scheduledDate: '',
     scheduledTime: '',
     tripType: 'one_way',
@@ -94,16 +98,20 @@ export default function BookRideScreen({ navigation }) {
         title="Create a student transport booking."
         subtitle="Select an approved driver, then the system links parent, student, and driver."
       />
-      <SectionCard>
+      <SectionCard icon="calendar-plus">
         <Text>Driver approval is required before the ride becomes active.</Text>
         <DropdownField label="Student" value={form.studentId} options={studentOptions} placeholder="Select student" onChange={(value) => updateField('studentId', value)} />
         <DropdownField label="Driver" value={form.driverId} options={driverOptions} placeholder="Select approved driver" onChange={(value) => updateField('driverId', value)} />
         <FormInput label="Pickup Address" value={form.pickupAddress} onChangeText={(value) => updateField('pickupAddress', value)} placeholder="Pickup address" multiline />
         <FormInput label="Drop-off Address" value={form.dropoffAddress} onChangeText={(value) => updateField('dropoffAddress', value)} placeholder="Drop-off address" multiline />
+        <FormInput label="Pickup Latitude" value={form.pickupLatitude} onChangeText={(value) => updateField('pickupLatitude', value)} placeholder="10.676344" keyboardType="decimal-pad" />
+        <FormInput label="Pickup Longitude" value={form.pickupLongitude} onChangeText={(value) => updateField('pickupLongitude', value)} placeholder="122.953221" keyboardType="decimal-pad" />
+        <FormInput label="Drop-off Latitude" value={form.dropoffLatitude} onChangeText={(value) => updateField('dropoffLatitude', value)} placeholder="10.668364" keyboardType="decimal-pad" />
+        <FormInput label="Drop-off Longitude" value={form.dropoffLongitude} onChangeText={(value) => updateField('dropoffLongitude', value)} placeholder="123.019768" keyboardType="decimal-pad" />
         <FormInput label="Scheduled Date" value={form.scheduledDate} onChangeText={(value) => updateField('scheduledDate', value)} placeholder="YYYY-MM-DD" />
         <FormInput label="Scheduled Time" value={form.scheduledTime} onChangeText={(value) => updateField('scheduledTime', value)} placeholder="07:00 AM" />
         <DropdownField label="Trip Type" value={form.tripType} options={tripTypeOptions} onChange={(value) => updateField('tripType', value)} />
-        <AppButton label="Submit Ride Booking" onPress={handleSubmit} />
+        <AppButton icon="paper-plane" label="Submit Ride Booking" onPress={handleSubmit} />
       </SectionCard>
     </Screen>
   );

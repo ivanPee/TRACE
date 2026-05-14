@@ -11,14 +11,26 @@ const mergeData = (state, payload = {}) => {
   state.availableDrivers = payload.drivers ?? state.availableDrivers;
 };
 
+const dashboardForRole = async (apiClient, role, token) => {
+  if (role === 'driver') {
+    return apiClient.driverDashboard(token);
+  }
+
+  if (role === 'parent') {
+    return apiClient.parentDashboard(token);
+  }
+
+  if (role === 'student') {
+    return apiClient.studentDashboard(token);
+  }
+
+  return {};
+};
+
 export const login = createAsyncThunk('app/login', async (payload) => {
   const auth = await api.login(payload);
-  const dashboard = auth.user.role === 'driver'
-    ? await api.driverDashboard(auth.token)
-    : auth.user.role === 'parent'
-      ? await api.parentDashboard(auth.token)
-      : {};
-  const drivers = auth.user.role === 'parent' ? await api.drivers(auth.token) : { drivers: [] };
+  const dashboard = await dashboardForRole(api, auth.user.role, auth.token);
+  const drivers = auth.user.role === 'parent' || auth.user.role === 'driver' ? await api.drivers(auth.token) : { drivers: [] };
   return { ...auth, ...dashboard, ...drivers };
 });
 
@@ -32,7 +44,8 @@ export const registerParent = createAsyncThunk('app/registerParent', async (payl
 export const registerDriver = createAsyncThunk('app/registerDriver', async (payload) => {
   const auth = await api.registerDriver(payload);
   const dashboard = await api.driverDashboard(auth.token);
-  return { ...auth, ...dashboard };
+  const drivers = await api.drivers(auth.token);
+  return { ...auth, ...dashboard, ...drivers };
 });
 
 export const refreshDashboard = createAsyncThunk('app/refreshDashboard', async (_, { getState }) => {
@@ -40,8 +53,8 @@ export const refreshDashboard = createAsyncThunk('app/refreshDashboard', async (
   if (!token) {
     return {};
   }
-  const dashboard = currentRole === 'driver' ? await api.driverDashboard(token) : currentRole === 'parent' ? await api.parentDashboard(token) : {};
-  const drivers = currentRole === 'parent' ? await api.drivers(token) : { drivers: [] };
+  const dashboard = await dashboardForRole(api, currentRole, token);
+  const drivers = currentRole === 'parent' || currentRole === 'driver' ? await api.drivers(token) : { drivers: [] };
   return { ...dashboard, ...drivers };
 });
 
@@ -85,6 +98,11 @@ export const updateRideStatus = createAsyncThunk('app/updateRideStatus', async (
   return api.updateRideStatus(token, rides[0].id, status);
 });
 
+export const transferRide = createAsyncThunk('app/transferRide', async ({ rideId, driverId }, { getState }) => {
+  const { token } = getState().app;
+  return api.transferRide(token, rideId, driverId);
+});
+
 export const pushCurrentLocation = createAsyncThunk('app/pushCurrentLocation', async (_, { getState }) => {
   const { token, rides } = getState().app;
   const ride = rides[0];
@@ -95,10 +113,25 @@ export const pushCurrentLocation = createAsyncThunk('app/pushCurrentLocation', a
   });
 });
 
-export const sendRemoteMessage = createAsyncThunk('app/sendRemoteMessage', async (text, { getState }) => {
+export const pushRideLocation = createAsyncThunk('app/pushRideLocation', async (location, { getState }) => {
+  const { token, rides } = getState().app;
+  const ride = rides[0];
+  return api.pushLocation(token, ride.id, {
+    ...location,
+    recorded_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
+  });
+});
+
+export const trackRide = createAsyncThunk('app/trackRide', async (rideId, { getState }) => {
+  const { token } = getState().app;
+  const tracked = await api.trackRide(token, rideId);
+  return { rideId, tracked };
+});
+
+export const sendRemoteMessage = createAsyncThunk('app/sendRemoteMessage', async (payload, { getState }) => {
   const { token, currentRole } = getState().app;
-  await api.sendMessage(token, text);
-  const dashboard = currentRole === 'driver' ? await api.driverDashboard(token) : currentRole === 'parent' ? await api.parentDashboard(token) : {};
+  await api.sendMessage(token, payload);
+  const dashboard = await dashboardForRole(api, currentRole, token);
   return dashboard;
 });
 
@@ -237,7 +270,20 @@ const appSlice = createSlice({
       .addCase(updateRideStatus.pending, pending)
       .addCase(updateRideStatus.fulfilled, refreshed)
       .addCase(updateRideStatus.rejected, rejected)
+      .addCase(transferRide.pending, pending)
+      .addCase(transferRide.fulfilled, refreshed)
+      .addCase(transferRide.rejected, rejected)
       .addCase(pushCurrentLocation.fulfilled, refreshed)
+      .addCase(pushRideLocation.fulfilled, refreshed)
+      .addCase(trackRide.fulfilled, (state, action) => {
+        const ride = state.rides.find((item) => item.id === action.payload.rideId);
+
+        if (!ride) {
+          return;
+        }
+
+        Object.assign(ride, action.payload.tracked);
+      })
       .addCase(sendRemoteMessage.pending, pending)
       .addCase(sendRemoteMessage.fulfilled, refreshed)
       .addCase(sendRemoteMessage.rejected, rejected);
@@ -245,5 +291,5 @@ const appSlice = createSlice({
 });
 
 export const appActions = appSlice.actions;
-export const appThunks = { login, registerParent, registerDriver, refreshDashboard, updateProfile, addStudent, updateStudent, createBooking, approveBooking, rejectBooking, updateDriverAvailability, updateRideStatus, pushCurrentLocation, sendRemoteMessage };
+export const appThunks = { login, registerParent, registerDriver, refreshDashboard, updateProfile, addStudent, updateStudent, createBooking, approveBooking, rejectBooking, updateDriverAvailability, updateRideStatus, transferRide, pushCurrentLocation, pushRideLocation, trackRide, sendRemoteMessage };
 export default appSlice.reducer;

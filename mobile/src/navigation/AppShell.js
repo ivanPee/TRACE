@@ -82,7 +82,7 @@ export default function AppShell() {
                 <ShellStack.Screen name="DriverTrips" component={DriverTripsScreen} options={{ title: 'Driver Trips' }} />
                 <ShellStack.Screen name="StudentDashboard" component={StudentDashboardScreen} options={{ title: 'Student Home' }} />
                 <ShellStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
-                <ShellStack.Screen name="Chat" component={ChatScreen} options={{ title: currentRole === 'driver' ? 'Parent Chat' : 'Driver Chat' }} />
+                <ShellStack.Screen name="Chat" component={ChatScreen} options={{ title: currentRole === 'student' ? 'Parent Chat' : currentRole === 'driver' ? 'Trip Chat' : 'Driver Chat' }} />
                 <ShellStack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
                 <ShellStack.Screen name="Transactions" component={TransactionsScreen} options={{ title: 'Transactions' }} />
                 <ShellStack.Screen name="ActiveRideMap" component={ActiveRideMapScreen} options={{ title: 'Live Tracking' }} />

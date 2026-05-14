@@ -38,27 +38,27 @@ export default function DriverTripsScreen({ navigation }) {
         subtitle="Status updates are saved to the backend and reflected for the parent automatically."
       />
 
-      <SectionCard title={ride.studentName} subtitle={ride.vehicle}>
+      <SectionCard title={ride.studentName} subtitle={ride.vehicle} icon="car-side">
         <Pill label={ride.status} tone="warning" />
-        <InfoRow label="Parent" value={ride.parentName} />
-        <InfoRow label="Pickup" value={ride.pickupTime} />
-        <InfoRow label="Drop-off Target" value={ride.dropoffTime} />
-        <InfoRow label="ETA" value={`${ride.etaMinutes} mins`} />
+        <InfoRow icon="user-friends" label="Parent" value={ride.parentName} />
+        <InfoRow icon="clock" label="Pickup" value={ride.pickupTime || 'Pending'} />
+        <InfoRow icon="flag-checkered" label="Drop-off Target" value={ride.dropoffTime || 'Pending'} />
+        <InfoRow icon="stopwatch" label="ETA" value={`${ride.etaMinutes} mins`} />
       </SectionCard>
 
-      <SectionCard title="Update trip status">
+      <SectionCard title="Update trip status" icon="tasks">
         {rideStatusSteps.map((status) => (
-          <AppButton key={status} label={status} variant={status === 'Completed' ? 'secondary' : 'ghost'} onPress={() => updateRideStatus(status)} />
+          <AppButton key={status} icon={status === 'Completed' ? 'check-circle' : 'circle'} label={status} variant={status === 'Completed' ? 'secondary' : 'ghost'} onPress={() => updateRideStatus(status)} />
         ))}
       </SectionCard>
 
-      <SectionCard title="GPS sharing">
-        <AppButton label={ride.isTracking ? 'Pause Live Sharing' : 'Start Live Sharing'} onPress={() => setTrackingActive(!ride.isTracking)} />
-        <AppButton label="Push Next Location" variant="secondary" onPress={advanceRideSimulation} />
-        <AppButton label="Reset Route" variant="ghost" onPress={resetRideSimulation} />
+      <SectionCard title="GPS sharing" icon="satellite-dish">
+        <AppButton icon={ride.isTracking ? 'pause' : 'play'} label={ride.isTracking ? 'Pause Live Sharing' : 'Start Live Sharing'} onPress={() => setTrackingActive(!ride.isTracking)} />
+        <AppButton icon="location-arrow" label="Push Next Location" variant="secondary" onPress={advanceRideSimulation} />
+        <AppButton icon="undo" label="Reset Route" variant="ghost" onPress={resetRideSimulation} />
       </SectionCard>
 
-      <AppButton label="Open Live Map" onPress={() => navigation.navigate('ActiveRideMap')} />
+      <AppButton icon="map-marked-alt" label="Open Live Map" onPress={() => navigation.navigate('ActiveRideMap')} />
     </Screen>
   );
 }
