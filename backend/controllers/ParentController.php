@@ -26,6 +26,7 @@ class ParentController extends ApiController
             $this->pdo->beginTransaction();
             $name = trim((string) ($input['student_name'] ?? $input['studentName'] ?? ''));
             [$firstName, $lastName] = array_pad(explode(' ', $name, 2), 2, '');
+            $coordinate = static fn ($value) => trim((string) $value) === '' ? null : (float) $value;
             $userId = $this->createUser('student', [
                 'first_name' => $firstName ?: 'Student',
                 'last_name' => $lastName ?: $user['last_name'],
@@ -35,8 +36,8 @@ class ParentController extends ApiController
             ], 'active');
 
             $stmt = $this->pdo->prepare(
-                'INSERT INTO students (user_id, parent_id, lrn, school_name, grade_level, pickup_address, dropoff_address, medical_notes)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                'INSERT INTO students (user_id, parent_id, lrn, school_name, grade_level, pickup_address, pickup_latitude, pickup_longitude, dropoff_address, dropoff_latitude, dropoff_longitude, medical_notes)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             );
             $stmt->execute([
                 $userId,
@@ -45,7 +46,11 @@ class ParentController extends ApiController
                 $input['school_name'] ?? $input['schoolName'] ?? '',
                 $input['grade_level'] ?? $input['gradeLevel'] ?? '',
                 $input['pickup_address'] ?? $input['pickupAddress'] ?? '',
+                $coordinate($input['pickup_latitude'] ?? $input['pickupLatitude'] ?? null),
+                $coordinate($input['pickup_longitude'] ?? $input['pickupLongitude'] ?? null),
                 $input['dropoff_address'] ?? $input['dropoffAddress'] ?? '',
+                $coordinate($input['dropoff_latitude'] ?? $input['dropoffLatitude'] ?? null),
+                $coordinate($input['dropoff_longitude'] ?? $input['dropoffLongitude'] ?? null),
                 $input['medical_notes'] ?? $input['notes'] ?? null,
             ]);
             $this->notifyUser((int) $user['id'], 'Student added', 'A student account was linked to your profile.', 'student', $userId);
@@ -83,6 +88,7 @@ class ParentController extends ApiController
 
         $name = trim((string) ($input['student_name'] ?? $input['studentName'] ?? ''));
         [$firstName, $lastName] = array_pad(explode(' ', $name, 2), 2, '');
+        $coordinate = static fn ($value) => trim((string) $value) === '' ? null : (float) $value;
 
         try {
             $this->pdo->beginTransaction();
@@ -102,13 +108,17 @@ class ParentController extends ApiController
             $userParams[] = (int) $student['student_user_id'];
             $this->pdo->prepare('UPDATE users SET ' . implode(', ', $userFields) . ' WHERE id = ?')->execute($userParams);
             $this->pdo->prepare(
-                'UPDATE students SET lrn = ?, school_name = ?, grade_level = ?, pickup_address = ?, dropoff_address = ?, medical_notes = ? WHERE id = ?'
+                'UPDATE students SET lrn = ?, school_name = ?, grade_level = ?, pickup_address = ?, pickup_latitude = ?, pickup_longitude = ?, dropoff_address = ?, dropoff_latitude = ?, dropoff_longitude = ?, medical_notes = ? WHERE id = ?'
             )->execute([
                 $input['lrn'] ?? '',
                 $input['school_name'] ?? $input['schoolName'] ?? '',
                 $input['grade_level'] ?? $input['gradeLevel'] ?? '',
                 $input['pickup_address'] ?? $input['pickupAddress'] ?? '',
+                $coordinate($input['pickup_latitude'] ?? $input['pickupLatitude'] ?? null),
+                $coordinate($input['pickup_longitude'] ?? $input['pickupLongitude'] ?? null),
                 $input['dropoff_address'] ?? $input['dropoffAddress'] ?? '',
+                $coordinate($input['dropoff_latitude'] ?? $input['dropoffLatitude'] ?? null),
+                $coordinate($input['dropoff_longitude'] ?? $input['dropoffLongitude'] ?? null),
                 $input['medical_notes'] ?? $input['notes'] ?? null,
                 $studentId,
             ]);
@@ -229,7 +239,11 @@ class ParentController extends ApiController
             'schoolName' => $student['school_name'],
             'gradeLevel' => $student['grade_level'],
             'pickupAddress' => $student['pickup_address'],
+            'pickupLatitude' => $student['pickup_latitude'],
+            'pickupLongitude' => $student['pickup_longitude'],
             'dropoffAddress' => $student['dropoff_address'],
+            'dropoffLatitude' => $student['dropoff_latitude'],
+            'dropoffLongitude' => $student['dropoff_longitude'],
             'emergencyContact' => 'Parent account',
             'notes' => $student['medical_notes'],
         ], $stmt->fetchAll());

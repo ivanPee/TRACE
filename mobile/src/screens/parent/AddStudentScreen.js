@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AddressPinPicker from '../../components/AddressPinPicker';
 import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import FormInput from '../../components/FormInput';
@@ -16,12 +17,24 @@ export default function AddStudentScreen({ navigation }) {
     schoolName: '',
     gradeLevel: '',
     pickupAddress: '',
+    pickupLatitude: '10.676',
+    pickupLongitude: '122.562',
     dropoffAddress: '',
+    dropoffLatitude: '10.676',
+    dropoffLongitude: '122.562',
     emergencyContact: '',
     notes: '',
   });
 
   const updateField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const updatePinnedAddress = (prefix, { address, latitude, longitude }) => {
+    setForm((current) => ({
+      ...current,
+      [`${prefix}Address`]: address,
+      [`${prefix}Latitude`]: latitude,
+      [`${prefix}Longitude`]: longitude,
+    }));
+  };
 
   const handleSave = async () => {
     if (!form.studentName || !form.lrn) {
@@ -34,7 +47,11 @@ export default function AddStudentScreen({ navigation }) {
       schoolName: form.schoolName,
       gradeLevel: form.gradeLevel,
       pickupAddress: form.pickupAddress,
+      pickupLatitude: form.pickupLatitude,
+      pickupLongitude: form.pickupLongitude,
       dropoffAddress: form.dropoffAddress,
+      dropoffLatitude: form.dropoffLatitude,
+      dropoffLongitude: form.dropoffLongitude,
       emergencyContact: form.emergencyContact,
       notes: form.notes,
     });
@@ -62,8 +79,8 @@ export default function AddStudentScreen({ navigation }) {
         <FormInput label="LRN" value={form.lrn} onChangeText={(value) => updateField('lrn', value)} placeholder="112233445566" />
         <FormInput label="School Name" value={form.schoolName} onChangeText={(value) => updateField('schoolName', value)} placeholder="School name" />
         <FormInput label="Grade Level" value={form.gradeLevel} onChangeText={(value) => updateField('gradeLevel', value)} placeholder="Grade 8" />
-        <FormInput label="Pickup Address" value={form.pickupAddress} onChangeText={(value) => updateField('pickupAddress', value)} placeholder="Home address" multiline />
-        <FormInput label="Drop-off Address" value={form.dropoffAddress} onChangeText={(value) => updateField('dropoffAddress', value)} placeholder="School gate" multiline />
+        <AddressPinPicker label="Pickup Address" value={form.pickupAddress} latitude={form.pickupLatitude} longitude={form.pickupLongitude} onChange={(value) => updatePinnedAddress('pickup', value)} />
+        <AddressPinPicker label="Drop-off Address" value={form.dropoffAddress} latitude={form.dropoffLatitude} longitude={form.dropoffLongitude} onChange={(value) => updatePinnedAddress('dropoff', value)} />
         <FormInput label="Emergency Contact" value={form.emergencyContact} onChangeText={(value) => updateField('emergencyContact', value)} placeholder="Parent mobile number" />
         <FormInput label="Medical Notes" value={form.notes} onChangeText={(value) => updateField('notes', value)} placeholder="Optional notes" multiline />
         <AppButton icon="save" label="Save Student Account" onPress={handleSave} />

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Text } from 'react-native';
+import AddressPinPicker from '../../components/AddressPinPicker';
 import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import DropdownField from '../../components/DropdownField';
@@ -20,10 +21,10 @@ export default function BookRideScreen({ navigation }) {
     driverId: firstDriver?.id || '',
     pickupAddress: firstStudent?.pickupAddress || '',
     dropoffAddress: firstStudent?.dropoffAddress || '',
-    pickupLatitude: '',
-    pickupLongitude: '',
-    dropoffLatitude: '',
-    dropoffLongitude: '',
+    pickupLatitude: firstStudent?.pickupLatitude || '10.676',
+    pickupLongitude: firstStudent?.pickupLongitude || '122.562',
+    dropoffLatitude: firstStudent?.dropoffLatitude || '10.676',
+    dropoffLongitude: firstStudent?.dropoffLongitude || '122.562',
     scheduledDate: '',
     scheduledTime: '',
     tripType: 'one_way',
@@ -47,6 +48,10 @@ export default function BookRideScreen({ navigation }) {
         studentName: firstStudent.name,
         pickupAddress: firstStudent.pickupAddress || current.pickupAddress,
         dropoffAddress: firstStudent.dropoffAddress || current.dropoffAddress,
+        pickupLatitude: firstStudent.pickupLatitude || current.pickupLatitude,
+        pickupLongitude: firstStudent.pickupLongitude || current.pickupLongitude,
+        dropoffLatitude: firstStudent.dropoffLatitude || current.dropoffLatitude,
+        dropoffLongitude: firstStudent.dropoffLongitude || current.dropoffLongitude,
       }));
     }
 
@@ -66,11 +71,23 @@ export default function BookRideScreen({ navigation }) {
           studentName: student?.name || '',
           pickupAddress: student?.pickupAddress || current.pickupAddress,
           dropoffAddress: student?.dropoffAddress || current.dropoffAddress,
+          pickupLatitude: student?.pickupLatitude || current.pickupLatitude,
+          pickupLongitude: student?.pickupLongitude || current.pickupLongitude,
+          dropoffLatitude: student?.dropoffLatitude || current.dropoffLatitude,
+          dropoffLongitude: student?.dropoffLongitude || current.dropoffLongitude,
         };
       }
 
       return { ...current, [key]: value };
     });
+  };
+  const updatePinnedAddress = (prefix, { address, latitude, longitude }) => {
+    setForm((current) => ({
+      ...current,
+      [`${prefix}Address`]: address,
+      [`${prefix}Latitude`]: latitude,
+      [`${prefix}Longitude`]: longitude,
+    }));
   };
 
   const handleRefresh = async () => {
@@ -102,12 +119,8 @@ export default function BookRideScreen({ navigation }) {
         <Text>Driver approval is required before the ride becomes active.</Text>
         <DropdownField label="Student" value={form.studentId} options={studentOptions} placeholder="Select student" onChange={(value) => updateField('studentId', value)} />
         <DropdownField label="Driver" value={form.driverId} options={driverOptions} placeholder="Select approved driver" onChange={(value) => updateField('driverId', value)} />
-        <FormInput label="Pickup Address" value={form.pickupAddress} onChangeText={(value) => updateField('pickupAddress', value)} placeholder="Pickup address" multiline />
-        <FormInput label="Drop-off Address" value={form.dropoffAddress} onChangeText={(value) => updateField('dropoffAddress', value)} placeholder="Drop-off address" multiline />
-        <FormInput label="Pickup Latitude" value={form.pickupLatitude} onChangeText={(value) => updateField('pickupLatitude', value)} placeholder="10.676344" keyboardType="decimal-pad" />
-        <FormInput label="Pickup Longitude" value={form.pickupLongitude} onChangeText={(value) => updateField('pickupLongitude', value)} placeholder="122.953221" keyboardType="decimal-pad" />
-        <FormInput label="Drop-off Latitude" value={form.dropoffLatitude} onChangeText={(value) => updateField('dropoffLatitude', value)} placeholder="10.668364" keyboardType="decimal-pad" />
-        <FormInput label="Drop-off Longitude" value={form.dropoffLongitude} onChangeText={(value) => updateField('dropoffLongitude', value)} placeholder="123.019768" keyboardType="decimal-pad" />
+        <AddressPinPicker label="Pickup Address" value={form.pickupAddress} latitude={form.pickupLatitude} longitude={form.pickupLongitude} onChange={(value) => updatePinnedAddress('pickup', value)} />
+        <AddressPinPicker label="Drop-off Address" value={form.dropoffAddress} latitude={form.dropoffLatitude} longitude={form.dropoffLongitude} onChange={(value) => updatePinnedAddress('dropoff', value)} />
         <FormInput label="Scheduled Date" value={form.scheduledDate} onChangeText={(value) => updateField('scheduledDate', value)} placeholder="YYYY-MM-DD" />
         <FormInput label="Scheduled Time" value={form.scheduledTime} onChangeText={(value) => updateField('scheduledTime', value)} placeholder="07:00 AM" />
         <DropdownField label="Trip Type" value={form.tripType} options={tripTypeOptions} onChange={(value) => updateField('tripType', value)} />

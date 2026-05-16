@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
@@ -18,10 +18,31 @@ export default function ActiveRideMapScreen({ navigation }) {
   const ride = rides[0];
   const origin = ride?.pickupLocation || ride?.routePoints?.[0];
   const destination = ride?.dropoffLocation || ride?.routePoints?.[ride?.routePoints?.length - 1];
-  const routePoints = roadRoute.length ? roadRoute : ride?.routePoints?.length ? ride.routePoints : [];
-  const completedRoute = routePoints.slice(0, (ride?.currentPointIndex || 0) + 1);
-  const remainingRoute = routePoints.slice(ride?.currentPointIndex || 0);
-  const progressPercent = Math.round((ride?.progress || 0) * 100);
+  const routePoints = useMemo(() => {
+    if (roadRoute.length) {
+      return roadRoute;
+    }
+
+    return ride?.routePoints?.length ? ride.routePoints : [];
+  }, [ride?.routePoints, roadRoute]);
+  const currentPointIndex = useMemo(() => {
+    if (!ride?.location || !routePoints.length) {
+      return ride?.currentPointIndex || 0;
+    }
+
+    return routePoints.reduce(
+      (closestIndex, point, index) => {
+        const closest = routePoints[closestIndex];
+        const currentDistance = Math.abs(Number(point.latitude) - Number(ride.location.latitude)) + Math.abs(Number(point.longitude) - Number(ride.location.longitude));
+        const closestDistance = Math.abs(Number(closest.latitude) - Number(ride.location.latitude)) + Math.abs(Number(closest.longitude) - Number(ride.location.longitude));
+        return currentDistance < closestDistance ? index : closestIndex;
+      },
+      Math.min(ride.currentPointIndex || 0, routePoints.length - 1)
+    );
+  }, [ride?.currentPointIndex, ride?.location, routePoints]);
+  const completedRoute = routePoints.slice(0, currentPointIndex + 1);
+  const remainingRoute = routePoints.slice(currentPointIndex);
+  const progressPercent = Math.round(routePoints.length > 1 ? currentPointIndex / (routePoints.length - 1) * 100 : (ride?.progress || 0) * 100);
 
   useEffect(() => {
     if (!origin || !destination) {
@@ -60,11 +81,12 @@ export default function ActiveRideMapScreen({ navigation }) {
 
     const syncRide = async () => {
       if (currentRole === 'driver' && ride.isTracking) {
+        const currentIndex = ride.currentPointIndex || 0;
+        const route = ride.routePoints || [];
+        const nextLocation = route.length ? route[Math.min(currentIndex + 1, route.length - 1)] : ride.location;
+
         advanceRideSimulation();
-        await pushRideLocation({
-          latitude: ride.location.latitude,
-          longitude: ride.location.longitude,
-        });
+        await pushRideLocation(nextLocation);
       } else {
         await trackRide(ride.id);
       }
@@ -73,12 +95,15 @@ export default function ActiveRideMapScreen({ navigation }) {
     const timer = setInterval(syncRide, 10000);
 
     return () => clearInterval(timer);
-  }, [advanceRideSimulation, currentRole, pushRideLocation, ride?.id, ride?.isTracking, ride?.location, trackRide]);
+  }, [advanceRideSimulation, currentRole, pushRideLocation, ride?.currentPointIndex, ride?.id, ride?.isTracking, ride?.location, ride?.routePoints, trackRide]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
       await refreshDashboard();
+      if (ride?.id) {
+        await trackRide(ride.id);
+      }
     } finally {
       setRefreshing(false);
     }

@@ -12,7 +12,7 @@ function admin_nav_items($active)
         ['key' => 'students', 'label' => 'Students', 'href' => 'students.php', 'icon' => 'bi-mortarboard'],
         ['key' => 'bookings', 'label' => 'Bookings', 'href' => 'bookings.php', 'icon' => 'bi-calendar-check'],
         ['key' => 'vehicles', 'label' => 'Vehicles', 'href' => 'vehicles.php', 'icon' => 'bi-truck'],
-        ['key' => 'messages', 'label' => 'Messages', 'href' => 'messages.php', 'icon' => 'bi-chat-dots'],
+        // ['key' => 'messages', 'label' => 'Messages', 'href' => 'messages.php', 'icon' => 'bi-chat-dots'],
         ['key' => 'notifications', 'label' => 'Alerts', 'href' => 'notifications.php', 'icon' => 'bi-bell'],
         ['key' => 'reports', 'label' => 'Reports', 'href' => 'reports.php', 'icon' => 'bi-bar-chart'],
     ];
