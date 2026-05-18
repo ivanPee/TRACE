@@ -3,6 +3,11 @@
 jest.useFakeTimers();
 
 jest.mock('react-native-vector-icons/FontAwesome5', () => 'FontAwesome5');
+<<<<<<< Updated upstream
+jest.mock('react-native-image-picker', () => ({
+  launchImageLibrary: jest.fn(),
+}));
+=======
 jest.mock(
   'react-native-image-picker',
   () => ({
@@ -10,3 +15,4 @@ jest.mock(
   }),
   { virtual: true }
 );
+>>>>>>> Stashed changes
