@@ -23,6 +23,37 @@ function admin_config()
     return $config;
 }
 
+function app_base_url()
+{
+    return rtrim((string) array_get(admin_config(), 'base_url', ''), '/');
+}
+
+function asset_url($path)
+{
+    $path = trim((string) $path);
+
+    if ($path === '') {
+        return null;
+    }
+
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+
+    return app_base_url() . '/' . ltrim($path, '/');
+}
+
+function render_document_link($path, $label = 'View document')
+{
+    $url = asset_url($path);
+
+    if (!$url) {
+        return '<span class="text-secondary">Not uploaded</span>';
+    }
+
+    return '<a class="btn btn-sm btn-outline-primary" href="' . e($url) . '" target="_blank" rel="noopener noreferrer">' . e($label) . '</a>';
+}
+
 function db()
 {
     static $pdo = null;
@@ -208,6 +239,42 @@ function update_user($userId, array $data)
     $params[] = $userId;
     $stmt = db()->prepare('UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = ?');
     $stmt->execute($params);
+}
+
+function sync_vehicle_record_admin($driverId, array $data)
+{
+    $pdo = db();
+    $stmt = $pdo->prepare('SELECT id FROM vehicles WHERE driver_id = ? LIMIT 1');
+    $stmt->execute([(int) $driverId]);
+    $vehicleId = $stmt->fetchColumn();
+
+    $payload = [
+        trim((string) array_get($data, 'vehicle_plate_number', array_get($data, 'plate_number'))),
+        trim((string) array_get($data, 'vehicle_model', array_get($data, 'model'))),
+        trim((string) array_get($data, 'vehicle_color', array_get($data, 'color', 'Unspecified'))),
+        max(1, (int) array_get($data, 'capacity', 1)),
+        array_get($data, 'registration_path') ?: null,
+        array_get($data, 'vehicle_status', array_get($data, 'status', 'active')),
+    ];
+
+    if ($vehicleId) {
+        $payload[] = (int) $vehicleId;
+        $pdo->prepare(
+            'UPDATE vehicles
+             SET plate_number = ?, model = ?, color = ?, capacity = ?, registration_path = ?, status = ?
+             WHERE id = ?'
+        )->execute($payload);
+
+        return (int) $vehicleId;
+    }
+
+    array_unshift($payload, (int) $driverId);
+    $pdo->prepare(
+        'INSERT INTO vehicles (driver_id, plate_number, model, color, capacity, registration_path, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?)'
+    )->execute($payload);
+
+    return (int) $pdo->lastInsertId();
 }
 
 function full_name(array $row)

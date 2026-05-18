@@ -29,7 +29,7 @@ function render_sidebar($active)
     $items = admin_nav_items($active);
     ?>
     <div class="sidebar-brand">
-        <div class="brand-mark">T</div>
+        <img class="brand-logo" src="assets/trace-logo.png" alt="TRACE logo">
         <div>
             <div class="fw-bold">TRACE</div>
             <small class="text-secondary">Admin Panel</small>
@@ -69,6 +69,18 @@ function admin_header($title, $active, $subtitle = '')
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
         <link href="assets/admin.css" rel="stylesheet">
+        <style>
+            :root {
+                --bs-primary: #078EFF;
+                --bs-primary-rgb: 7, 142, 255;
+                --bs-success: #22D61E;
+                --bs-success-rgb: 34, 214, 30;
+                --bs-warning: #FFC61B;
+                --bs-warning-rgb: 255, 198, 27;
+                --bs-dark: #2E3138;
+                --bs-dark-rgb: 46, 49, 56;
+            }
+        </style>
     </head>
     <body>
         <aside class="admin-sidebar d-none d-lg-flex">
@@ -136,7 +148,7 @@ function admin_footer()
                     icon: flash.dataset.flashType === 'error' ? 'error' : 'success',
                     title: flash.dataset.flashType === 'error' ? 'Action failed' : 'Success',
                     text: flash.dataset.flashMessage,
-                    confirmButtonColor: '#0d6efd'
+                    confirmButtonColor: '#078EFF'
                 });
             }
 
@@ -148,8 +160,8 @@ function admin_footer()
                         title: form.dataset.confirmTitle || 'Are you sure?',
                         text: form.dataset.confirm || 'This action cannot be undone.',
                         showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
+                        confirmButtonColor: '#078EFF',
+                        cancelButtonColor: '#2E3138',
                         confirmButtonText: form.dataset.confirmButton || 'Yes, continue'
                     }).then((result) => {
                         if (result.isConfirmed) {

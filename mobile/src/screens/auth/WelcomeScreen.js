@@ -1,14 +1,17 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import AppButton from '../../components/AppButton';
 import HeaderBlock from '../../components/HeaderBlock';
 import Screen from '../../components/Screen';
 import { colors } from '../../theme/colors';
 
+const traceLogo = require('../../assets/trace-logo.png');
+
 export default function WelcomeScreen({ navigation }) {
   return (
     <Screen style={styles.container}>
       <View style={styles.hero}>
+        <Image source={traceLogo} style={styles.logo} resizeMode="contain" />
         <Text style={styles.brand}>TRACE</Text>
         <Text style={styles.tagline}>Track rides, protect students, and keep every parent informed.</Text>
       </View>
@@ -33,15 +36,23 @@ const styles = StyleSheet.create({
     padding: 24,
     marginBottom: 22,
   },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 12,
+    alignSelf: 'center',
+  },
   brand: {
     color: colors.white,
     fontSize: 42,
     fontWeight: '900',
     marginBottom: 8,
+    textAlign: 'center',
   },
   tagline: {
-    color: '#dfe7fd',
+    color: '#DDE5EE',
     fontSize: 16,
     lineHeight: 24,
+    textAlign: 'center',
   },
 });

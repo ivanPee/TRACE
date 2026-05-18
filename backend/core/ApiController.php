@@ -7,11 +7,12 @@ use PDO;
 class ApiController
 {
     protected PDO $pdo;
+    protected array $config;
 
     public function __construct()
     {
-        $config = require dirname(__DIR__) . '/config/config.php';
-        $this->pdo = Database::connect($config['db']);
+        $this->config = require dirname(__DIR__) . '/config/config.php';
+        $this->pdo = Database::connect($this->config['db']);
     }
 
     protected function input(): array
@@ -99,6 +100,7 @@ class ApiController
             'email' => $user['email'],
             'mobileNumber' => $user['mobile_number'],
             'profilePhoto' => $user['profile_photo'] ?? null,
+            'profilePhotoUrl' => $this->fileUrl($user['profile_photo'] ?? null),
             'status' => $user['status'],
         ];
 
@@ -112,6 +114,7 @@ class ApiController
                 $resource['addressLatitude'] = $parent['address_latitude'] !== null ? (float) $parent['address_latitude'] : null;
                 $resource['addressLongitude'] = $parent['address_longitude'] !== null ? (float) $parent['address_longitude'] : null;
                 $resource['validIdPath'] = $parent['valid_id_path'];
+                $resource['validIdUrl'] = $this->fileUrl($parent['valid_id_path']);
                 $resource['emergencyContactName'] = $parent['emergency_contact_name'];
                 $resource['emergencyContactNumber'] = $parent['emergency_contact_number'];
             }
@@ -123,14 +126,24 @@ class ApiController
             $driver = $stmt->fetch();
 
             if ($driver) {
+                $vehicle = $this->vehicleByDriverId((int) $driver['id']);
+                $legacyOrcrPath = !$vehicle ? ($driver['vehicle_photo_path'] ?? null) : null;
                 $resource['driverId'] = (int) $driver['id'];
                 $resource['licenseNumber'] = $driver['license_number'];
                 $resource['licenseExpiry'] = $driver['license_expiry'];
+                $resource['licensePhotoUrl'] = $this->fileUrl($driver['license_photo_path']);
                 $resource['licensePhotoPath'] = $driver['license_photo_path'];
+                $resource['vehicleType'] = $driver['vehicle_type'];
                 $resource['vehiclePlateNumber'] = $driver['vehicle_plate_number'];
                 $resource['vehicleModel'] = $driver['vehicle_model'];
                 $resource['vehicleColor'] = $driver['vehicle_color'];
-                $resource['vehicleOrcrPath'] = $driver['vehicle_photo_path'];
+                $resource['vehiclePhotoPath'] = $vehicle ? $driver['vehicle_photo_path'] : null;
+                $resource['vehiclePhotoUrl'] = $this->fileUrl($vehicle ? $driver['vehicle_photo_path'] : null);
+                $resource['vehicleId'] = $vehicle ? (int) $vehicle['id'] : null;
+                $resource['vehicleOrcrPath'] = $vehicle['registration_path'] ?? $legacyOrcrPath;
+                $resource['vehicleOrcrUrl'] = $this->fileUrl($vehicle['registration_path'] ?? $legacyOrcrPath);
+                $resource['vehicleCapacity'] = $vehicle ? (int) $vehicle['capacity'] : 1;
+                $resource['vehicleStatus'] = $vehicle['status'] ?? 'active';
                 $resource['approvalStatus'] = $driver['approval_status'];
                 $resource['isOnline'] = (bool) $driver['is_online'];
             }
@@ -153,6 +166,64 @@ class ApiController
         }
 
         return $resource;
+    }
+
+    protected function fileUrl(?string $path): ?string
+    {
+        $path = trim((string) $path);
+
+        if ($path === '') {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $path)) {
+            return $path;
+        }
+
+        return rtrim((string) ($this->config['base_url'] ?? ''), '/') . '/' . ltrim($path, '/');
+    }
+
+    protected function vehicleByDriverId(int $driverId): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM vehicles WHERE driver_id = ? ORDER BY id ASC LIMIT 1');
+        $stmt->execute([$driverId]);
+        $vehicle = $stmt->fetch();
+
+        return $vehicle ?: null;
+    }
+
+    protected function syncVehicleRecord(int $driverId, array $data, ?string $registrationPath = null): int
+    {
+        $vehicle = $this->vehicleByDriverId($driverId);
+        $resolvedRegistrationPath = $registrationPath
+            ?? ($data['vehicle_orcr_path'] ?? $data['vehicleOrcrPath'] ?? $vehicle['registration_path'] ?? null);
+        $payload = [
+            trim((string) ($data['vehicle_plate_number'] ?? $data['vehiclePlateNumber'] ?? '')),
+            trim((string) ($data['vehicle_model'] ?? $data['vehicleModel'] ?? '')),
+            trim((string) ($data['vehicle_color'] ?? $data['vehicleColor'] ?? 'Unspecified')),
+            max(1, (int) ($data['vehicle_capacity'] ?? $data['vehicleCapacity'] ?? 1)),
+            $resolvedRegistrationPath,
+            $data['vehicle_status'] ?? $data['vehicleStatus'] ?? 'active',
+        ];
+
+        if ($vehicle) {
+            $payload[] = (int) $vehicle['id'];
+            $this->pdo->prepare(
+                'UPDATE vehicles
+                 SET plate_number = ?, model = ?, color = ?, capacity = ?, registration_path = ?, status = ?
+                 WHERE id = ?'
+            )->execute($payload);
+
+            return (int) $vehicle['id'];
+        }
+
+        array_unshift($payload, $driverId);
+        $this->pdo->prepare(
+            'INSERT INTO vehicles (driver_id, plate_number, model, color, capacity, registration_path, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?)'
+        )->execute($payload);
+
+        return (int) $this->pdo->lastInsertId();
     }
 
     protected function storeUpload(string $field, string $folder): ?string

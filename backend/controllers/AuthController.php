@@ -58,9 +58,12 @@ class AuthController extends ApiController
             $licensePhotoPath = $this->storeUpload('license_photo', 'drivers')
                 ?: $this->storeBase64Upload((string) ($input['license_photo_base64'] ?? $input['licensePhotoBase64'] ?? ''), 'drivers', 'license.jpg')
                 ?: ($input['license_photo_path'] ?? $input['licensePhotoPath'] ?? 'pending-upload');
+            $vehiclePhotoPath = $this->storeUpload('vehicle_photo', 'vehicles')
+                ?: $this->storeBase64Upload((string) ($input['vehicle_photo_base64'] ?? $input['vehiclePhotoBase64'] ?? ''), 'vehicles', 'vehicle-photo.jpg')
+                ?: ($input['vehicle_photo_path'] ?? $input['vehiclePhotoPath'] ?? null);
             $orcrPath = $this->storeUpload('vehicle_orcr', 'vehicles')
                 ?: $this->storeBase64Upload((string) ($input['vehicle_orcr_base64'] ?? $input['vehicleOrcrBase64'] ?? ''), 'vehicles', 'orcr.jpg')
-                ?: ($input['vehicle_photo_path'] ?? $input['vehiclePhotoPath'] ?? null);
+                ?: ($input['vehicle_orcr_path'] ?? $input['vehicleOrcrPath'] ?? null);
             $stmt = $this->pdo->prepare(
                 'INSERT INTO drivers (user_id, license_number, license_expiry, license_photo_path, vehicle_type, vehicle_plate_number, vehicle_model, vehicle_color, vehicle_photo_path, approval_status)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
@@ -74,9 +77,11 @@ class AuthController extends ApiController
                 $input['vehicle_plate_number'] ?? $input['vehiclePlateNumber'] ?? '',
                 $input['vehicle_model'] ?? $input['vehicleModel'] ?? '',
                 $input['vehicle_color'] ?? $input['vehicleColor'] ?? 'Unspecified',
-                $orcrPath,
+                $vehiclePhotoPath,
                 'pending',
             ]);
+            $driverId = (int) $this->pdo->lastInsertId();
+            $this->syncVehicleRecord($driverId, $input, $orcrPath);
             $this->pdo->commit();
             $user = $this->findUser($userId);
 
@@ -188,12 +193,15 @@ class AuthController extends ApiController
             if ($user['role_code'] === 'driver') {
                 $licensePhotoPath = $this->storeUpload('license_photo', 'drivers')
                     ?: $this->storeBase64Upload((string) ($input['license_photo_base64'] ?? $input['licensePhotoBase64'] ?? ''), 'drivers', 'license.jpg');
+                $vehiclePhotoPath = $this->storeUpload('vehicle_photo', 'vehicles')
+                    ?: $this->storeBase64Upload((string) ($input['vehicle_photo_base64'] ?? $input['vehiclePhotoBase64'] ?? ''), 'vehicles', 'vehicle-photo.jpg');
                 $orcrPath = $this->storeUpload('vehicle_orcr', 'vehicles')
                     ?: $this->storeBase64Upload((string) ($input['vehicle_orcr_base64'] ?? $input['vehicleOrcrBase64'] ?? ''), 'vehicles', 'orcr.jpg');
-                $driverFields = ['license_number = ?', 'license_expiry = ?', 'vehicle_plate_number = ?', 'vehicle_model = ?', 'vehicle_color = ?'];
+                $driverFields = ['license_number = ?', 'license_expiry = ?', 'vehicle_type = ?', 'vehicle_plate_number = ?', 'vehicle_model = ?', 'vehicle_color = ?'];
                 $driverParams = [
                     $input['license_number'] ?? $input['licenseNumber'] ?? '',
                     $input['license_expiry'] ?? $input['licenseExpiry'] ?? date('Y-m-d', strtotime('+1 year')),
+                    $input['vehicle_type'] ?? $input['vehicleType'] ?? 'School Service',
                     $input['vehicle_plate_number'] ?? $input['vehiclePlateNumber'] ?? '',
                     $input['vehicle_model'] ?? $input['vehicleModel'] ?? '',
                     $input['vehicle_color'] ?? $input['vehicleColor'] ?? 'Unspecified',
@@ -204,13 +212,21 @@ class AuthController extends ApiController
                     $driverParams[] = $licensePhotoPath;
                 }
 
-                if ($orcrPath) {
+                if ($vehiclePhotoPath) {
                     $driverFields[] = 'vehicle_photo_path = ?';
-                    $driverParams[] = $orcrPath;
+                    $driverParams[] = $vehiclePhotoPath;
                 }
 
                 $driverParams[] = (int) $user['id'];
                 $this->pdo->prepare('UPDATE drivers SET ' . implode(', ', $driverFields) . ' WHERE user_id = ?')->execute($driverParams);
+
+                $driver = $this->pdo->prepare('SELECT id FROM drivers WHERE user_id = ? LIMIT 1');
+                $driver->execute([(int) $user['id']]);
+                $driverId = (int) $driver->fetchColumn();
+
+                if ($driverId > 0) {
+                    $this->syncVehicleRecord($driverId, $input, $orcrPath);
+                }
             }
 
             $this->notifyUser((int) $user['id'], 'Profile updated', 'Your account details were updated successfully.', 'profile', (int) $user['id']);

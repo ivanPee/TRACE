@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import AppButton from '../../components/AppButton';
 import FormInput from '../../components/FormInput';
 import HeaderBlock from '../../components/HeaderBlock';
@@ -18,7 +19,9 @@ export default function RegisterDriverScreen({ navigation }) {
     vehiclePlateNumber: '',
     vehicleModel: '',
     vehicleColor: '',
+    vehicleType: 'School Service',
     licensePhoto: null,
+    vehiclePhoto: null,
     vehicleOrcr: null,
     profilePhoto: null,
     password: '',
@@ -27,10 +30,16 @@ export default function RegisterDriverScreen({ navigation }) {
   const updateField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
   const handleSubmit = async () => {
+    if (!form.profilePhoto || !form.licensePhoto || !form.vehiclePhoto || !form.vehicleOrcr) {
+      Alert.alert('Missing uploads', 'Please upload the profile photo, driver license, vehicle photo, and ORCR document before continuing.');
+      return;
+    }
+
     const payload = new FormData();
-    ['firstName', 'lastName', 'email', 'mobileNumber', 'licenseNumber', 'vehiclePlateNumber', 'vehicleModel', 'vehicleColor', 'password'].forEach((key) => payload.append(key, form[key]));
+    ['firstName', 'lastName', 'email', 'mobileNumber', 'licenseNumber', 'vehiclePlateNumber', 'vehicleModel', 'vehicleColor', 'vehicleType', 'password'].forEach((key) => payload.append(key, form[key]));
     appendImage(payload, 'profile_photo', form.profilePhoto);
     appendImage(payload, 'license_photo', form.licensePhoto);
+    appendImage(payload, 'vehicle_photo', form.vehiclePhoto);
     appendImage(payload, 'vehicle_orcr', form.vehicleOrcr);
     await registerDriver(payload);
     navigation.reset({
@@ -44,7 +53,7 @@ export default function RegisterDriverScreen({ navigation }) {
       <HeaderBlock
         eyebrow="Driver Signup"
         title="Register the driver and vehicle details."
-        subtitle="The final version should connect this form to PHP file uploads for driver license and vehicle documents."
+        subtitle="Upload the driver profile photo, license, vehicle photo, and ORCR so the admin can review and verify the account."
       />
       <SectionCard>
         <FormInput label="First Name" value={form.firstName} onChangeText={(value) => updateField('firstName', value)} placeholder="Marco" />
@@ -52,11 +61,13 @@ export default function RegisterDriverScreen({ navigation }) {
         <FormInput label="Email" value={form.email} onChangeText={(value) => updateField('email', value)} placeholder="driver@example.com" />
         <FormInput label="Mobile Number" value={form.mobileNumber} onChangeText={(value) => updateField('mobileNumber', value)} placeholder="09179876543" />
         <FormInput label="Driver License Number" value={form.licenseNumber} onChangeText={(value) => updateField('licenseNumber', value)} placeholder="N01-23-456789" />
+        <FormInput label="Vehicle Type" value={form.vehicleType} onChangeText={(value) => updateField('vehicleType', value)} placeholder="School Service" />
         <FormInput label="Vehicle Plate Number" value={form.vehiclePlateNumber} onChangeText={(value) => updateField('vehiclePlateNumber', value)} placeholder="ABC-1234" />
         <FormInput label="Vehicle Model" value={form.vehicleModel} onChangeText={(value) => updateField('vehicleModel', value)} placeholder="Toyota Hiace" />
         <FormInput label="Vehicle Color" value={form.vehicleColor} onChangeText={(value) => updateField('vehicleColor', value)} placeholder="White" />
         <ImagePickerField label="Profile Image" value={form.profilePhoto} onChange={(value) => updateField('profilePhoto', value)} />
         <ImagePickerField label="Driver License Image" value={form.licensePhoto} onChange={(value) => updateField('licensePhoto', value)} />
+        <ImagePickerField label="Vehicle Photo" value={form.vehiclePhoto} onChange={(value) => updateField('vehiclePhoto', value)} />
         <ImagePickerField label="Vehicle ORCR Image" value={form.vehicleOrcr} onChange={(value) => updateField('vehicleOrcr', value)} />
         <FormInput label="Password" value={form.password} onChangeText={(value) => updateField('password', value)} placeholder="Password" secureTextEntry />
         <AppButton label="Create Driver Account" variant="secondary" onPress={handleSubmit} />

@@ -1,6 +1,18 @@
 const API_BASE_URL = 'http://192.168.1.18/trace/TRACE/backend/index.php';
 const REQUEST_TIMEOUT_MS = 15000;
 
+export function resolveAssetUrl(path) {
+  if (!path) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
+  return `${API_BASE_URL.replace(/\/index\.php$/, '')}/${String(path).replace(/^\/+/, '')}`;
+}
+
 async function request(path, { method = 'GET', token, body } = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);

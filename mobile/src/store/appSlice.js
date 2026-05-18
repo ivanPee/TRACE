@@ -1,6 +1,21 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { initialState, rideStatusSteps } from '../data/appDefaults';
-import { api } from '../services/api';
+import { api, resolveAssetUrl } from '../services/api';
+
+const normalizeUser = (user) => {
+  if (!user) {
+    return user;
+  }
+
+  return {
+    ...user,
+    profilePhotoUrl: resolveAssetUrl(user.profilePhoto) || user.profilePhotoUrl || null,
+    validIdUrl: resolveAssetUrl(user.validIdPath) || user.validIdUrl || null,
+    licensePhotoUrl: resolveAssetUrl(user.licensePhotoPath) || user.licensePhotoUrl || null,
+    vehiclePhotoUrl: resolveAssetUrl(user.vehiclePhotoPath) || user.vehiclePhotoUrl || null,
+    vehicleOrcrUrl: resolveAssetUrl(user.vehicleOrcrPath) || user.vehicleOrcrUrl || null,
+  };
+};
 
 const mergeData = (state, payload = {}) => {
   state.students = payload.students ?? state.students;
@@ -230,7 +245,7 @@ const appSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.token = action.payload.token ?? state.token;
-      state.currentUser = action.payload.user ?? state.currentUser;
+      state.currentUser = action.payload.user ? normalizeUser(action.payload.user) : state.currentUser;
       state.currentRole = action.payload.user?.role ?? state.currentRole;
       mergeData(state, action.payload);
     };

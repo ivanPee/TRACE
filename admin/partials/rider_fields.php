@@ -22,6 +22,7 @@
     <div class="col-md-3"><label class="form-label fw-semibold">Plate number</label><input class="form-control" name="vehicle_plate_number" value="<?= e(array_get($record, 'vehicle_plate_number')) ?>" required></div>
     <div class="col-md-3"><label class="form-label fw-semibold">Model</label><input class="form-control" name="vehicle_model" value="<?= e(array_get($record, 'vehicle_model')) ?>" required></div>
     <div class="col-md-3"><label class="form-label fw-semibold">Color</label><input class="form-control" name="vehicle_color" value="<?= e(array_get($record, 'vehicle_color')) ?>" required></div>
-    <div class="col-md-8"><label class="form-label fw-semibold">Vehicle photo path</label><input class="form-control" name="vehicle_photo_path" value="<?= e(array_get($record, 'vehicle_photo_path')) ?>"></div>
+    <div class="col-md-6"><label class="form-label fw-semibold">Vehicle photo path</label><input class="form-control" name="vehicle_photo_path" value="<?= e(array_get($record, 'vehicle_photo_path')) ?>"></div>
+    <div class="col-md-6"><label class="form-label fw-semibold">ORCR path</label><input class="form-control" name="registration_path" value="<?= e(array_get($record, 'registration_path')) ?>"></div>
     <div class="col-md-4 d-flex align-items-end"><div class="form-check"><input class="form-check-input" type="checkbox" name="license_verified" value="1" id="rl<?= e($recordId) ?>" <?= !empty($record['license_verified']) ? 'checked' : '' ?>><label class="form-check-label" for="rl<?= e($recordId) ?>">License verified</label></div></div>
 </div>
