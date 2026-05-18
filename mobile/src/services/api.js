@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://192.168.1.106/trace/TRACE/backend/index.php';
+const API_BASE_URL = 'http://192.168.1.18/trace/TRACE/backend/index.php';
 const REQUEST_TIMEOUT_MS = 15000;
 
 async function request(path, { method = 'GET', token, body } = {}) {
@@ -50,6 +50,7 @@ export const api = {
   addStudent: (token, payload) => request('/api/parents/students', { method: 'POST', token, body: payload }),
   updateStudent: (token, studentId, payload) => request(`/api/parents/students/${studentId}`, { method: 'POST', token, body: payload }),
   createBooking: (token, payload) => request('/api/bookings', { method: 'POST', token, body: payload }),
+  updateBooking: (token, bookingId, payload) => request(`/api/bookings/${bookingId}`, { method: 'POST', token, body: payload }),
   approveBooking: (token, bookingId) => request(`/api/driver/bookings/${bookingId}/approve`, { method: 'POST', token }),
   rejectBooking: (token, bookingId) => request(`/api/driver/bookings/${bookingId}/reject`, { method: 'POST', token }),
   updateDriverAvailability: (token, isOnline) => request('/api/driver/availability', { method: 'POST', token, body: { isOnline } }),

@@ -25,7 +25,7 @@ const toLatLng = (point) => [point.latitude, point.longitude];
 
 const serialize = (value) => JSON.stringify(value).replace(/<\//g, '<\\/');
 
-export default function OpenStreetMapView({ center, markers = [], polylines = [], zoom = 15, style, onMapPress, onMarkerDragEnd }) {
+export default function OpenStreetMapView({ center, markers = [], polylines = [], zoom = 15, style, locateOnLoad = false, onMapPress, onMarkerDragEnd, onCurrentLocation, onLocationError }) {
   const html = useMemo(() => {
     const safeCenter = normalizePoint(center) || { latitude: 10.676, longitude: 122.562 };
     const safeMarkers = markers
@@ -50,6 +50,21 @@ export default function OpenStreetMapView({ center, markers = [], polylines = []
       html, body, #map { height: 100%; margin: 0; padding: 0; }
       body { background: #eef2f6; }
       .leaflet-container { font-family: Arial, sans-serif; }
+      .trace-marker {
+        align-items: center;
+        border: 3px solid #ffffff;
+        border-radius: 999px;
+        box-shadow: 0 6px 18px rgba(20, 54, 66, 0.28);
+        color: #ffffff;
+        display: flex;
+        font-size: 12px;
+        font-weight: 800;
+        height: 34px;
+        justify-content: center;
+        min-width: 34px;
+        padding: 0 6px;
+        width: 34px;
+      }
     </style>
   </head>
   <body>
@@ -63,6 +78,8 @@ export default function OpenStreetMapView({ center, markers = [], polylines = []
           title: escapeHtml(marker.title),
           description: escapeHtml(marker.description),
           draggable: Boolean(marker.draggable),
+          color: marker.color || '#f77f00',
+          label: escapeHtml(marker.label || ''),
         }))
       )};
       const polylines = ${serialize(
@@ -70,6 +87,8 @@ export default function OpenStreetMapView({ center, markers = [], polylines = []
           coordinates: polyline.coordinates.map(toLatLng),
           color: polyline.color || '#1f2a44',
           width: polyline.width || 5,
+          opacity: polyline.opacity ?? 0.9,
+          dashArray: polyline.dashArray || null,
         }))
       )};
       const allPoints = ${serialize(allPoints.map(toLatLng))};
@@ -86,12 +105,26 @@ export default function OpenStreetMapView({ center, markers = [], polylines = []
       }).addTo(map);
 
       polylines.forEach((line) => {
-        L.polyline(line.coordinates, { color: line.color, weight: line.width, opacity: 0.9 }).addTo(map);
+        L.polyline(line.coordinates, {
+          color: line.color,
+          weight: line.width,
+          opacity: line.opacity,
+          dashArray: line.dashArray,
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).addTo(map);
       });
 
       markers.forEach((marker, index) => {
         const popup = marker.description ? '<strong>' + marker.title + '</strong><br>' + marker.description : marker.title;
-        const leafletMarker = L.marker(marker.coordinate, { draggable: marker.draggable }).addTo(map).bindPopup(popup);
+        const icon = L.divIcon({
+          className: '',
+          html: '<div class="trace-marker" style="background:' + marker.color + '">' + (marker.label || '') + '</div>',
+          iconSize: [46, 34],
+          iconAnchor: [23, 17],
+          popupAnchor: [0, -18]
+        });
+        const leafletMarker = L.marker(marker.coordinate, { draggable: marker.draggable, icon }).addTo(map).bindPopup(popup);
         leafletMarker.on('dragend', (event) => {
           const point = event.target.getLatLng();
           postMessage({ type: 'markerDragEnd', index, coordinate: { latitude: point.lat, longitude: point.lng } });
@@ -105,10 +138,26 @@ export default function OpenStreetMapView({ center, markers = [], polylines = []
       if (allPoints.length > 1) {
         map.fitBounds(L.latLngBounds(allPoints), { padding: [32, 32], maxZoom: ${Number(zoom) || 15} });
       }
+
+      if (${locateOnLoad ? 'true' : 'false'} && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const coordinate = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            };
+            postMessage({ type: 'currentLocation', coordinate });
+          },
+          (error) => {
+            postMessage({ type: 'locationError', message: error.message || 'Location unavailable' });
+          },
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
+        );
+      }
     </script>
   </body>
 </html>`;
-  }, [center, markers, polylines, zoom]);
+  }, [center, locateOnLoad, markers, polylines, zoom]);
 
   const handleMessage = (event) => {
     try {
@@ -121,6 +170,14 @@ export default function OpenStreetMapView({ center, markers = [], polylines = []
       if (message.type === 'markerDragEnd') {
         onMarkerDragEnd?.(message.coordinate, message.index);
       }
+
+      if (message.type === 'currentLocation') {
+        onCurrentLocation?.(message.coordinate);
+      }
+
+      if (message.type === 'locationError') {
+        onLocationError?.(message.message);
+      }
     } catch {
       // Ignore malformed messages from the embedded map.
     }
@@ -132,6 +189,7 @@ export default function OpenStreetMapView({ center, markers = [], polylines = []
         source={{ html }}
         javaScriptEnabled
         domStorageEnabled
+        geolocationEnabled
         originWhitelist={['*']}
         mixedContentMode="always"
         onMessage={handleMessage}

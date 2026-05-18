@@ -83,6 +83,9 @@ export default function BookingsScreen({ navigation }) {
                 <AppButton icon="exchange-alt" label="Transfer Booking" variant="secondary" onPress={() => handleTransfer(booking)} />
               </>
             ) : null}
+            {isParent && !['completed', 'cancelled'].includes(String(booking.status).toLowerCase()) ? (
+              <AppButton icon="edit" label="Edit Booking Details" variant="secondary" onPress={() => navigation.navigate('BookRide', { booking })} />
+            ) : null}
           </SectionCard>
         ))}
         {isParent ? <AppButton icon="plus" label="Create New Booking" onPress={() => navigation.navigate('BookRide')} /> : null}

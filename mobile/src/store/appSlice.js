@@ -78,6 +78,11 @@ export const createBooking = createAsyncThunk('app/createBooking', async (payloa
   return api.createBooking(token, payload);
 });
 
+export const updateBooking = createAsyncThunk('app/updateBooking', async ({ bookingId, payload }, { getState }) => {
+  const { token } = getState().app;
+  return api.updateBooking(token, bookingId, payload);
+});
+
 export const approveBooking = createAsyncThunk('app/approveBooking', async (bookingId, { getState }) => {
   const { token } = getState().app;
   return api.approveBooking(token, bookingId);
@@ -260,6 +265,9 @@ const appSlice = createSlice({
       .addCase(createBooking.pending, pending)
       .addCase(createBooking.fulfilled, refreshed)
       .addCase(createBooking.rejected, rejected)
+      .addCase(updateBooking.pending, pending)
+      .addCase(updateBooking.fulfilled, refreshed)
+      .addCase(updateBooking.rejected, rejected)
       .addCase(approveBooking.pending, pending)
       .addCase(approveBooking.fulfilled, refreshed)
       .addCase(approveBooking.rejected, rejected)
@@ -291,5 +299,5 @@ const appSlice = createSlice({
 });
 
 export const appActions = appSlice.actions;
-export const appThunks = { login, registerParent, registerDriver, refreshDashboard, updateProfile, addStudent, updateStudent, createBooking, approveBooking, rejectBooking, updateDriverAvailability, updateRideStatus, transferRide, pushCurrentLocation, pushRideLocation, trackRide, sendRemoteMessage };
+export const appThunks = { login, registerParent, registerDriver, refreshDashboard, updateProfile, addStudent, updateStudent, createBooking, updateBooking, approveBooking, rejectBooking, updateDriverAvailability, updateRideStatus, transferRide, pushCurrentLocation, pushRideLocation, trackRide, sendRemoteMessage };
 export default appSlice.reducer;

@@ -28,6 +28,7 @@ function AppContextBridge({ children }) {
   const addStudent = useCallback((payload) => dispatch(appThunks.addStudent(payload)).unwrap(), [dispatch]);
   const updateStudent = useCallback((studentId, payload) => dispatch(appThunks.updateStudent({ studentId, payload })).unwrap(), [dispatch]);
   const createBooking = useCallback((payload) => dispatch(appThunks.createBooking(payload)).unwrap(), [dispatch]);
+  const updateBooking = useCallback((bookingId, payload) => dispatch(appThunks.updateBooking({ bookingId, payload })).unwrap(), [dispatch]);
   const approveBooking = useCallback((bookingId) => dispatch(appThunks.approveBooking(bookingId)).unwrap(), [dispatch]);
   const rejectBooking = useCallback((bookingId) => dispatch(appThunks.rejectBooking(bookingId)).unwrap(), [dispatch]);
   const updateDriverAvailability = useCallback((isOnline) => dispatch(appThunks.updateDriverAvailability(isOnline)).unwrap(), [dispatch]);
@@ -52,6 +53,7 @@ function AppContextBridge({ children }) {
       addStudent,
       updateStudent,
       createBooking,
+      updateBooking,
       approveBooking,
       rejectBooking,
       updateDriverAvailability,
@@ -75,6 +77,7 @@ function AppContextBridge({ children }) {
       addStudent,
       updateStudent,
       createBooking,
+      updateBooking,
       approveBooking,
       rejectBooking,
       updateDriverAvailability,

@@ -185,6 +185,72 @@ class ParentController extends ApiController
         }
     }
 
+    public function updateBooking(array $params = []): void
+    {
+        $user = $this->requireUser('parent');
+        $input = $this->input();
+        $bookingId = (int) ($params['id'] ?? 0);
+        $stmt = $this->pdo->prepare(
+            'SELECT bookings.*
+             FROM bookings
+             JOIN parents ON parents.id = bookings.parent_id
+             WHERE bookings.id = ? AND parents.user_id = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$bookingId, (int) $user['id']]);
+        $booking = $stmt->fetch();
+
+        if (!$booking) {
+            Response::json(['success' => false, 'message' => 'Booking not found.'], 404);
+        }
+
+        if (in_array($booking['booking_status'], ['completed', 'cancelled'], true)) {
+            Response::json(['success' => false, 'message' => 'Completed or cancelled bookings cannot be edited.'], 422);
+        }
+
+        try {
+            $driverId = $input['driver_id'] ?? $input['driverId'] ?? null;
+            $coordinate = static fn ($value) => trim((string) $value) === '' ? null : (float) $value;
+            $stmt = $this->pdo->prepare(
+                'UPDATE bookings
+                 SET student_id = ?, pickup_address = ?, dropoff_address = ?, pickup_latitude = ?, pickup_longitude = ?,
+                    dropoff_latitude = ?, dropoff_longitude = ?, scheduled_date = ?, scheduled_time = ?, trip_type = ?,
+                    notes = ?, assigned_driver_id = ?
+                 WHERE id = ?'
+            );
+            $stmt->execute([
+                (int) ($input['student_id'] ?? $input['studentId'] ?? $booking['student_id']),
+                $input['pickup_address'] ?? $input['pickupAddress'] ?? $booking['pickup_address'],
+                $input['dropoff_address'] ?? $input['dropoffAddress'] ?? $booking['dropoff_address'],
+                $coordinate($input['pickup_latitude'] ?? $input['pickupLatitude'] ?? $booking['pickup_latitude']),
+                $coordinate($input['pickup_longitude'] ?? $input['pickupLongitude'] ?? $booking['pickup_longitude']),
+                $coordinate($input['dropoff_latitude'] ?? $input['dropoffLatitude'] ?? $booking['dropoff_latitude']),
+                $coordinate($input['dropoff_longitude'] ?? $input['dropoffLongitude'] ?? $booking['dropoff_longitude']),
+                $input['scheduled_date'] ?? $input['scheduledDate'] ?? $booking['scheduled_date'],
+                $input['scheduled_time'] ?? $input['scheduledTime'] ?? $booking['scheduled_time'],
+                $input['trip_type'] ?? $input['tripType'] ?? $booking['trip_type'],
+                $input['notes'] ?? $booking['notes'],
+                $driverId ? (int) $driverId : null,
+                $bookingId,
+            ]);
+
+            if ($driverId && (int) $driverId !== (int) $booking['assigned_driver_id']) {
+                $driverUser = $this->pdo->prepare('SELECT user_id FROM drivers WHERE id = ? LIMIT 1');
+                $driverUser->execute([(int) $driverId]);
+                $driverUserId = (int) $driverUser->fetchColumn();
+
+                if ($driverUserId) {
+                    $this->notifyUser($driverUserId, 'Booking updated', 'A parent updated a student trip assigned to you.', 'booking', $bookingId);
+                }
+            }
+
+            $this->notifyUser((int) $user['id'], 'Booking updated', 'Your booking details were updated.', 'booking', $bookingId);
+            Response::json(['success' => true, 'message' => 'Booking updated.', 'data' => $this->dashboardData($user)]);
+        } catch (\Throwable $exception) {
+            Response::json(['success' => false, 'message' => $exception->getMessage()], 422);
+        }
+    }
+
     public function drivers(): void
     {
         $this->requireUser();
@@ -269,11 +335,16 @@ class ParentController extends ApiController
             'studentId' => (int) $booking['student_id'],
             'studentName' => trim($booking['student_first_name'] . ' ' . $booking['student_last_name']),
             'pickupAddress' => $booking['pickup_address'],
+            'pickupLatitude' => $booking['pickup_latitude'],
+            'pickupLongitude' => $booking['pickup_longitude'],
             'dropoffAddress' => $booking['dropoff_address'],
+            'dropoffLatitude' => $booking['dropoff_latitude'],
+            'dropoffLongitude' => $booking['dropoff_longitude'],
             'scheduledDate' => $booking['scheduled_date'],
             'scheduledTime' => substr((string) $booking['scheduled_time'], 0, 5),
             'tripType' => $booking['trip_type'],
             'status' => $booking['booking_status'],
+            'driverId' => $booking['assigned_driver_id'] ? (int) $booking['assigned_driver_id'] : null,
             'driverName' => trim(($booking['driver_first_name'] ?? '') . ' ' . ($booking['driver_last_name'] ?? '')) ?: 'To be assigned',
         ], $stmt->fetchAll());
     }

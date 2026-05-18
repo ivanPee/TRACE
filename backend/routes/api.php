@@ -21,6 +21,7 @@ $routes = [
     ['POST', '/api/parents/students', [ParentController::class, 'createStudent']],
     ['POST', '/api/parents/students/{id}', [ParentController::class, 'updateStudent']],
     ['POST', '/api/bookings', [ParentController::class, 'createBooking']],
+    ['POST', '/api/bookings/{id}', [ParentController::class, 'updateBooking']],
     ['GET', '/api/driver/dashboard', [DriverController::class, 'dashboard']],
     ['POST', '/api/driver/availability', [DriverController::class, 'availability']],
     ['POST', '/api/driver/bookings/{id}/approve', [DriverController::class, 'approveBooking']],

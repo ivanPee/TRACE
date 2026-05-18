@@ -18,41 +18,33 @@ export default function ActiveRideMapScreen({ navigation }) {
   const ride = rides[0];
   const origin = ride?.pickupLocation || ride?.routePoints?.[0];
   const destination = ride?.dropoffLocation || ride?.routePoints?.[ride?.routePoints?.length - 1];
+  const statusKey = String(ride?.status || '').toLowerCase();
+  const isPastPickup = ['picked up', 'in transit', 'dropped off', 'completed'].includes(statusKey);
+  const nextStopLabel = isPastPickup ? 'Drop-off' : 'Pickup';
+  const lastLocationText = ride?.lastLocationAt ? new Date(ride.lastLocationAt.replace(' ', 'T')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Waiting';
+  const activeRouteColor = isPastPickup ? '#1d9bf0' : '#16a34a';
+  const routeStops = useMemo(
+    () => [ride?.location, !isPastPickup ? origin : null, destination].filter(Boolean),
+    [destination, isPastPickup, origin, ride?.location]
+  );
   const routePoints = useMemo(() => {
     if (roadRoute.length) {
       return roadRoute;
     }
 
-    return ride?.routePoints?.length ? ride.routePoints : [];
-  }, [ride?.routePoints, roadRoute]);
-  const currentPointIndex = useMemo(() => {
-    if (!ride?.location || !routePoints.length) {
-      return ride?.currentPointIndex || 0;
-    }
-
-    return routePoints.reduce(
-      (closestIndex, point, index) => {
-        const closest = routePoints[closestIndex];
-        const currentDistance = Math.abs(Number(point.latitude) - Number(ride.location.latitude)) + Math.abs(Number(point.longitude) - Number(ride.location.longitude));
-        const closestDistance = Math.abs(Number(closest.latitude) - Number(ride.location.latitude)) + Math.abs(Number(closest.longitude) - Number(ride.location.longitude));
-        return currentDistance < closestDistance ? index : closestIndex;
-      },
-      Math.min(ride.currentPointIndex || 0, routePoints.length - 1)
-    );
-  }, [ride?.currentPointIndex, ride?.location, routePoints]);
-  const completedRoute = routePoints.slice(0, currentPointIndex + 1);
-  const remainingRoute = routePoints.slice(currentPointIndex);
-  const progressPercent = Math.round(routePoints.length > 1 ? currentPointIndex / (routePoints.length - 1) * 100 : (ride?.progress || 0) * 100);
+    return routeStops.length ? routeStops : ride?.routePoints?.length ? ride.routePoints : [];
+  }, [ride?.routePoints, roadRoute, routeStops]);
+  const progressPercent = Math.max(0, Math.min(100, Math.round((ride?.progress || 0) * 100)));
 
   useEffect(() => {
-    if (!origin || !destination) {
+    if (routeStops.length < 2) {
       return undefined;
     }
 
     let cancelled = false;
     const fetchRoute = async () => {
       try {
-        const coordinates = `${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}`;
+        const coordinates = routeStops.map((point) => `${point.longitude},${point.latitude}`).join(';');
         const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson`);
         const json = await response.json();
         const points = json.routes?.[0]?.geometry?.coordinates?.map(([longitude, latitude]) => ({ latitude, longitude })) || [];
@@ -72,7 +64,7 @@ export default function ActiveRideMapScreen({ navigation }) {
     return () => {
       cancelled = true;
     };
-  }, [destination, origin]);
+  }, [routeStops]);
 
   useEffect(() => {
     if (!ride?.id) {
@@ -92,7 +84,7 @@ export default function ActiveRideMapScreen({ navigation }) {
       }
     };
 
-    const timer = setInterval(syncRide, 10000);
+    const timer = setInterval(syncRide, 5000);
 
     return () => clearInterval(timer);
   }, [advanceRideSimulation, currentRole, pushRideLocation, ride?.currentPointIndex, ride?.id, ride?.isTracking, ride?.location, ride?.routePoints, trackRide]);
@@ -130,13 +122,14 @@ export default function ActiveRideMapScreen({ navigation }) {
           center={ride.location}
           style={styles.map}
           markers={[
-            { coordinate: ride.location, title: ride.driverName, description: `${ride.status} - ${ride.etaMinutes} mins ETA` },
-            origin ? { coordinate: origin, title: 'Pickup Point', description: ride.studentName } : null,
-            destination ? { coordinate: destination, title: 'Drop-off Point', description: 'School destination' } : null,
+            { coordinate: ride.location, title: ride.driverName, description: `${ride.status} - ${ride.etaMinutes} mins ETA`, color: colors.accent, label: 'CAR' },
+            origin ? { coordinate: origin, title: 'Pickup Point', description: ride.studentName, color: colors.success, label: 'P' } : null,
+            destination ? { coordinate: destination, title: 'Drop-off Point', description: 'School destination', color: colors.deep, label: 'D' } : null,
           ].filter(Boolean)}
           polylines={[
-            remainingRoute.length ? { coordinates: remainingRoute, color: colors.line, width: 5 } : null,
-            completedRoute.length ? { coordinates: completedRoute, color: colors.deep, width: 6 } : null,
+            routePoints.length ? { coordinates: routePoints, color: colors.white, width: 12, opacity: 0.95 } : null,
+            routePoints.length ? { coordinates: routePoints, color: colors.ink, width: 9, opacity: 0.18 } : null,
+            routePoints.length ? { coordinates: routePoints, color: activeRouteColor, width: 6, opacity: 0.95 } : null,
           ].filter(Boolean)}
         />
       </View>
@@ -150,6 +143,8 @@ export default function ActiveRideMapScreen({ navigation }) {
         <InfoRow icon="user-friends" label="Parent" value={ride.parentName} />
         <InfoRow icon="stopwatch" label="ETA" value={`${ride.etaMinutes} mins`} />
         <InfoRow icon="road" label="Distance left" value={`${ride.distanceKm} km`} />
+        <InfoRow icon="map-marker-alt" label="Next stop" value={nextStopLabel} />
+        <InfoRow icon="sync-alt" label="Last location" value={lastLocationText} />
         <InfoRow icon="chart-line" label="Route progress" value={`${progressPercent}%`} />
       </SectionCard>
 
@@ -161,7 +156,7 @@ export default function ActiveRideMapScreen({ navigation }) {
             <AppButton icon="undo" label="Reset Simulation" variant="ghost" onPress={resetRideSimulation} />
           </>
         ) : null}
-        <Text style={styles.note}>OpenStreetMap tiles and OSRM road routing refresh with TRACE ride updates every 10 seconds.</Text>
+        <Text style={styles.note}>OpenStreetMap tiles and OSRM road routing refresh with TRACE ride updates every 5 seconds.</Text>
       </SectionCard>
     </Screen>
   );
@@ -172,9 +167,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 24,
     marginBottom: 16,
+    position: 'relative',
   },
   map: {
-    height: 360,
+    height: 420,
     width: '100%',
   },
   progressTrack: {
