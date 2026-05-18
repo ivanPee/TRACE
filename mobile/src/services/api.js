@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://192.168.1.18/trace/TRACE/backend/index.php';
+const API_BASE_URL = 'http://172.20.10.14/trace/TRACE/backend/index.php';
 const REQUEST_TIMEOUT_MS = 15000;
 
 export function resolveAssetUrl(path) {
