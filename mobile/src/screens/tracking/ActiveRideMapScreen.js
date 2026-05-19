@@ -19,10 +19,14 @@ export default function ActiveRideMapScreen({ navigation }) {
   const origin = ride?.pickupLocation || ride?.routePoints?.[0];
   const destination = ride?.dropoffLocation || ride?.routePoints?.[ride?.routePoints?.length - 1];
   const statusKey = String(ride?.status || '').toLowerCase();
-  const isPastPickup = ['picked up', 'in transit', 'dropped off', 'completed'].includes(statusKey);
-  const nextStopLabel = isPastPickup ? 'Drop-off' : 'Pickup';
+  const isPastPickup = ride?.isPickedUp ?? ['picked up', 'in transit', 'dropped off', 'completed'].includes(statusKey);
+  const nextStopLabel = ride?.nextStopLabel || (isPastPickup ? 'Drop-off' : 'Pickup');
   const lastLocationText = ride?.lastLocationAt ? new Date(ride.lastLocationAt.replace(' ', 'T')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Waiting';
   const activeRouteColor = isPastPickup ? '#1d9bf0' : '#16a34a';
+  const studentLocation = ride?.studentLocation || (!isPastPickup ? origin : ride?.location);
+  const distanceToPickupText = ride?.distanceToPickupKm != null ? `${ride.distanceToPickupKm} km` : `${ride?.distanceKm || 0} km`;
+  const movementText = ride?.movement?.isMoving ? `Moving${ride?.movement?.speedKph ? ` at ${ride.movement.speedKph} km/h` : ''}` : 'Stopped';
+  const headingText = ride?.movement?.heading != null ? `${Math.round(ride.movement.heading)}°` : 'Unavailable';
   const routeStops = useMemo(
     () => [ride?.location, !isPastPickup ? origin : null, destination].filter(Boolean),
     [destination, isPastPickup, origin, ride?.location]
@@ -79,11 +83,12 @@ export default function ActiveRideMapScreen({ navigation }) {
 
         advanceRideSimulation();
         await pushRideLocation(nextLocation);
-      } else {
-        await trackRide(ride.id);
       }
+
+      await trackRide(ride.id);
     };
 
+    syncRide();
     const timer = setInterval(syncRide, 5000);
 
     return () => clearInterval(timer);
@@ -122,8 +127,30 @@ export default function ActiveRideMapScreen({ navigation }) {
           center={ride.location}
           style={styles.map}
           markers={[
-            { coordinate: ride.location, title: ride.driverName, description: `${ride.status} - ${ride.etaMinutes} mins ETA`, color: colors.accent, label: 'CAR' },
-            origin ? { coordinate: origin, title: 'Pickup Point', description: ride.studentName, color: colors.success, label: 'P' } : null,
+            studentLocation
+              ? {
+                  coordinate: studentLocation,
+                  title: isPastPickup ? ride.studentName : `${ride.studentName} pickup`,
+                  description: isPastPickup ? 'Student is onboard the vehicle.' : `Student waiting at pickup point • Driver is ${distanceToPickupText} away`,
+                  color: colors.deep,
+                  label: 'STU',
+                  size: 30,
+                  offsetY: isPastPickup ? 10 : 0,
+                  zIndexOffset: isPastPickup ? 200 : 300,
+                }
+              : null,
+            {
+              coordinate: ride.location,
+              title: ride.driverName,
+              description: isPastPickup
+                ? `${ride.status} • ${ride.distanceKm} km to drop-off • ${movementText}`
+                : `${ride.status} • ${distanceToPickupText} to pickup • ${movementText}`,
+              color: colors.accent,
+              label: 'CAR',
+              offsetY: isPastPickup ? -12 : 0,
+              zIndexOffset: 500,
+            },
+            origin ? { coordinate: origin, title: 'Pickup Point', description: ride.studentName, color: colors.success, label: 'P', zIndexOffset: 100 } : null,
             destination ? { coordinate: destination, title: 'Drop-off Point', description: 'School destination', color: colors.deep, label: 'D' } : null,
           ].filter(Boolean)}
           polylines={[
@@ -143,7 +170,10 @@ export default function ActiveRideMapScreen({ navigation }) {
         <InfoRow icon="user-friends" label="Parent" value={ride.parentName} />
         <InfoRow icon="stopwatch" label="ETA" value={`${ride.etaMinutes} mins`} />
         <InfoRow icon="road" label="Distance left" value={`${ride.distanceKm} km`} />
+        {!isPastPickup ? <InfoRow icon="map-pin" label="Distance to pickup" value={distanceToPickupText} /> : null}
         <InfoRow icon="map-marker-alt" label="Next stop" value={nextStopLabel} />
+        <InfoRow icon="car-side" label="Vehicle status" value={movementText} />
+        <InfoRow icon="compass" label="Heading" value={headingText} />
         <InfoRow icon="sync-alt" label="Last location" value={lastLocationText} />
         <InfoRow icon="chart-line" label="Route progress" value={`${progressPercent}%`} />
       </SectionCard>

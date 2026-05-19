@@ -80,6 +80,9 @@ export default function OpenStreetMapView({ center, markers = [], polylines = []
           draggable: Boolean(marker.draggable),
           color: marker.color || '#f77f00',
           label: escapeHtml(marker.label || ''),
+          offsetY: Number(marker.offsetY || 0),
+          zIndexOffset: Number(marker.zIndexOffset || 0),
+          size: Number(marker.size || 34),
         }))
       )};
       const polylines = ${serialize(
@@ -119,12 +122,12 @@ export default function OpenStreetMapView({ center, markers = [], polylines = []
         const popup = marker.description ? '<strong>' + marker.title + '</strong><br>' + marker.description : marker.title;
         const icon = L.divIcon({
           className: '',
-          html: '<div class="trace-marker" style="background:' + marker.color + '">' + (marker.label || '') + '</div>',
-          iconSize: [46, 34],
+          html: '<div class="trace-marker" style="background:' + marker.color + ';height:' + marker.size + 'px;min-width:' + marker.size + 'px;width:' + marker.size + 'px;transform:translateY(' + marker.offsetY + 'px)">' + (marker.label || '') + '</div>',
+          iconSize: [Math.max(46, marker.size), Math.max(34, marker.size)],
           iconAnchor: [23, 17],
           popupAnchor: [0, -18]
         });
-        const leafletMarker = L.marker(marker.coordinate, { draggable: marker.draggable, icon }).addTo(map).bindPopup(popup);
+        const leafletMarker = L.marker(marker.coordinate, { draggable: marker.draggable, icon, zIndexOffset: marker.zIndexOffset }).addTo(map).bindPopup(popup);
         leafletMarker.on('dragend', (event) => {
           const point = event.target.getLatLng();
           postMessage({ type: 'markerDragEnd', index, coordinate: { latitude: point.lat, longitude: point.lng } });
