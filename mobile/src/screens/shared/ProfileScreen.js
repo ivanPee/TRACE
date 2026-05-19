@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
-<<<<<<< Updated upstream
 import AddressPinPicker from '../../components/AddressPinPicker';
-=======
 import { Image, StyleSheet, Text, View } from 'react-native';
->>>>>>> Stashed changes
 import AppNavBar from '../../components/AppNavBar';
 import AppButton from '../../components/AppButton';
 import FormInput from '../../components/FormInput';
@@ -122,21 +119,12 @@ export default function ProfileScreen({ navigation }) {
           </>
         ) : (
           <>
-<<<<<<< Updated upstream
             <InfoRow icon="phone-alt" label="Mobile Number" value={currentUser?.mobileNumber || '-'} />
             {currentRole === 'parent' ? <InfoRow icon="home" label="Address" value={currentUser?.address || '-'} /> : null}
             {currentRole === 'parent' ? <InfoRow icon="address-book" label="Emergency Contact" value={currentUser?.emergencyContactName || '-'} /> : null}
             {currentRole === 'driver' ? <InfoRow icon="id-card" label="License Number" value={currentUser?.licenseNumber || '-'} /> : null}
             {currentRole === 'driver' ? <InfoRow icon="shuttle-van" label="Vehicle" value={`${currentUser?.vehicleModel || '-'} - ${currentUser?.vehiclePlateNumber || '-'}`} /> : null}
-            {currentRole === 'driver' ? <InfoRow icon="file-alt" label="ORCR Path" value={currentUser?.vehicleOrcrPath || '-'} /> : null}
-            <AppButton icon="edit" label="Edit Account" onPress={() => setEditing(true)} />
-=======
-            <InfoRow label="Mobile Number" value={currentUser?.mobileNumber || '-'} />
-            {currentRole === 'parent' ? <InfoRow label="Address" value={currentUser?.address || '-'} /> : null}
-            {currentRole === 'parent' ? <InfoRow label="Emergency Contact" value={currentUser?.emergencyContactName || '-'} /> : null}
-            {currentRole === 'driver' ? <InfoRow label="License Number" value={currentUser?.licenseNumber || '-'} /> : null}
-            {currentRole === 'driver' ? <InfoRow label="Vehicle" value={`${currentUser?.vehicleModel || '-'} - ${currentUser?.vehiclePlateNumber || '-'}`} /> : null}
-            {currentRole === 'driver' ? <InfoRow label="Vehicle Type" value={currentUser?.vehicleType || '-'} /> : null}
+            {currentRole === 'driver' ? <InfoRow icon="truck-pickup" label="Vehicle Type" value={currentUser?.vehicleType || '-'} /> : null}
             {(currentRole === 'parent' && currentUser?.validIdUrl) || (currentRole === 'driver' && (currentUser?.licensePhotoUrl || currentUser?.vehiclePhotoUrl || currentUser?.vehicleOrcrUrl)) ? (
               <View style={styles.gallery}>
                 {currentRole === 'parent' && currentUser?.validIdUrl ? (
@@ -165,8 +153,7 @@ export default function ProfileScreen({ navigation }) {
                 ) : null}
               </View>
             ) : null}
-            <AppButton label="Edit Account" onPress={() => setEditing(true)} />
->>>>>>> Stashed changes
+            <AppButton icon="edit" label="Edit Account" onPress={() => setEditing(true)} />
           </>
         )}
         <AppButton
