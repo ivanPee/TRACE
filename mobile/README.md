@@ -97,7 +97,7 @@ Try these checks:
 - notifications
 - chat
 - profile
-- live tracking UI with `react-native-maps`
+- live tracking UI with OpenStreetMap and OSRM routing
 
 ## Current Limitation
 The app is now CLI-based, but the business data is still mock-driven in:

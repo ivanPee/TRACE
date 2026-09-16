@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme/colors';
+import traceLogo from '../../assets/images/trace-logo.jpg';
 
 export default function SplashScreen({ navigation }) {
   useEffect(() => {
@@ -14,9 +15,9 @@ export default function SplashScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.badge}>
-        <Text style={styles.title}>TRACE</Text>
+        <Image source={traceLogo} style={styles.logo} resizeMode="contain" accessibilityLabel="TRACE logo" />
       </View>
-      <Text style={styles.subtitle}>Real-time student transport management</Text>
+      <Text style={styles.subtitle}>Real-time child transport management</Text>
     </View>
   );
 }
@@ -30,16 +31,16 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   badge: {
-    backgroundColor: colors.ink,
-    paddingHorizontal: 28,
-    paddingVertical: 18,
-    borderRadius: 24,
+    width: '100%',
+    maxWidth: 280,
+    backgroundColor: colors.white,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    borderRadius: 22,
   },
-  title: {
-    fontSize: 40,
-    fontWeight: '900',
-    color: colors.white,
-    letterSpacing: 2,
+  logo: {
+    width: '100%',
+    height: 220,
   },
   subtitle: {
     marginTop: 18,

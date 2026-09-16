@@ -2,9 +2,11 @@
 
 use Controllers\AuthController;
 use Controllers\DriverController;
+use Controllers\GeocodingController;
 use Controllers\MessageController;
 use Controllers\ParentController;
 use Controllers\RideController;
+use Controllers\StudentController;
 use Core\Request;
 use Core\Response;
 
@@ -12,13 +14,27 @@ $routes = [
     ['POST', '/api/register/parent', [AuthController::class, 'registerParent']],
     ['POST', '/api/register/driver', [AuthController::class, 'registerDriver']],
     ['POST', '/api/login', [AuthController::class, 'login']],
+    ['POST', '/api/geocode/search', [GeocodingController::class, 'search']],
+    ['POST', '/api/geocode/reverse', [GeocodingController::class, 'reverse']],
     ['GET', '/api/me', [AuthController::class, 'me']],
     ['POST', '/api/profile', [AuthController::class, 'updateProfile']],
     ['GET', '/api/parent/dashboard', [ParentController::class, 'dashboard']],
+    ['GET', '/api/student/dashboard', [StudentController::class, 'dashboard']],
+    ['GET', '/api/child/dashboard', [StudentController::class, 'dashboard']],
     ['GET', '/api/drivers', [ParentController::class, 'drivers']],
+    ['GET', '/api/parents/service/estimate', [ParentController::class, 'serviceEstimate']],
+    ['POST', '/api/parents/monthly-plan/estimate', [ParentController::class, 'serviceEstimate']],
+    ['POST', '/api/parents/service/pay', [ParentController::class, 'payServiceAdvance']],
+    ['GET', '/api/parents/monthly-plan', [ParentController::class, 'serviceEstimate']],
+    ['POST', '/api/parents/monthly-plan/pay', [ParentController::class, 'payServiceAdvance']],
+    ['POST', '/api/parents/monthly-plan/{id}/update', [ParentController::class, 'updateMonthlyPlan']],
+    ['POST', '/api/parents/monthly-plan/{id}/cancel', [ParentController::class, 'cancelMonthlyPlan']],
+    ['POST', '/api/parents/monthly-plan/bookings/{id}/cancel-day', [ParentController::class, 'cancelMonthlyPlanDay']],
+    ['POST', '/api/bookings', [ParentController::class, 'payServiceAdvance']],
     ['POST', '/api/parents/students', [ParentController::class, 'createStudent']],
     ['POST', '/api/parents/students/{id}', [ParentController::class, 'updateStudent']],
-    ['POST', '/api/bookings', [ParentController::class, 'createBooking']],
+    ['POST', '/api/parents/children', [ParentController::class, 'createStudent']],
+    ['POST', '/api/parents/children/{id}', [ParentController::class, 'updateStudent']],
     ['GET', '/api/driver/dashboard', [DriverController::class, 'dashboard']],
     ['POST', '/api/driver/availability', [DriverController::class, 'availability']],
     ['POST', '/api/driver/bookings/{id}/approve', [DriverController::class, 'approveBooking']],

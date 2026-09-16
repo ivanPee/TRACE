@@ -10,6 +10,7 @@ import ParentDashboardScreen from '../screens/parent/ParentDashboardScreen';
 import StudentsScreen from '../screens/parent/StudentsScreen';
 import AddStudentScreen from '../screens/parent/AddStudentScreen';
 import BookRideScreen from '../screens/parent/BookRideScreen';
+import MonthlyPlanManageScreen from '../screens/parent/MonthlyPlanManageScreen';
 import DriverDashboardScreen from '../screens/driver/DriverDashboardScreen';
 import DriverTripsScreen from '../screens/driver/DriverTripsScreen';
 import StudentDashboardScreen from '../screens/student/StudentDashboardScreen';
@@ -74,15 +75,16 @@ export default function AppShell() {
                 }}
               >
                 <ShellStack.Screen name="ParentDashboard" component={ParentDashboardScreen} options={{ title: 'Parent Home' }} />
-                <ShellStack.Screen name="Students" component={StudentsScreen} options={{ title: 'Students' }} />
-                <ShellStack.Screen name="AddStudent" component={AddStudentScreen} options={{ title: 'Add Student' }} />
-                <ShellStack.Screen name="BookRide" component={BookRideScreen} options={{ title: 'Book Ride' }} />
-                <ShellStack.Screen name="Bookings" component={BookingsScreen} options={{ title: 'Bookings' }} />
+                <ShellStack.Screen name="Students" component={StudentsScreen} options={{ title: 'Children' }} />
+                <ShellStack.Screen name="AddStudent" component={AddStudentScreen} options={{ title: 'Add Child' }} />
+                <ShellStack.Screen name="MonthlyPlanManage" component={MonthlyPlanManageScreen} options={{ title: 'Monthly Plan' }} />
+                <ShellStack.Screen name="BookRide" component={BookRideScreen} options={{ title: 'Transport Plan' }} />
+                <ShellStack.Screen name="Bookings" component={BookingsScreen} options={{ title: 'Transport' }} />
                 <ShellStack.Screen name="DriverDashboard" component={DriverDashboardScreen} options={{ title: 'Driver Home' }} />
                 <ShellStack.Screen name="DriverTrips" component={DriverTripsScreen} options={{ title: 'Driver Trips' }} />
-                <ShellStack.Screen name="StudentDashboard" component={StudentDashboardScreen} options={{ title: 'Student Home' }} />
+                <ShellStack.Screen name="StudentDashboard" component={StudentDashboardScreen} options={{ title: 'Child Home' }} />
                 <ShellStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
-                <ShellStack.Screen name="Chat" component={ChatScreen} options={{ title: currentRole === 'driver' ? 'Parent Chat' : 'Driver Chat' }} />
+                <ShellStack.Screen name="Chat" component={ChatScreen} options={{ title: 'Messages' }} />
                 <ShellStack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
                 <ShellStack.Screen name="Transactions" component={TransactionsScreen} options={{ title: 'Transactions' }} />
                 <ShellStack.Screen name="ActiveRideMap" component={ActiveRideMapScreen} options={{ title: 'Live Tracking' }} />

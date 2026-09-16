@@ -59,10 +59,10 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   placeholder: {
-    color: '#98a2b3',
+    color: colors.slate,
   },
   chevron: {
-    color: '#667085',
+    color: colors.slate,
     fontSize: 12,
     marginLeft: 8,
   },
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
   },
   selectedOption: {
-    backgroundColor: '#eef4ff',
+    backgroundColor: colors.accentSoft,
   },
   optionText: {
     color: colors.ink,

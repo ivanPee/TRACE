@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
     marginBottom: 10,
-    color: '#5c677d',
+    color: colors.slate,
   },
   error: {
     color: colors.danger,

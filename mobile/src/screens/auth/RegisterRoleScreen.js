@@ -11,10 +11,10 @@ export default function RegisterRoleScreen({ navigation }) {
       <HeaderBlock
         eyebrow="Registration"
         title="Choose which account type you want to create."
-        subtitle="Parents can create student accounts later. Students are not self-registered in this version because the parent manages them."
+        subtitle="Parents can create child accounts later. Children are not self-registered in this version because the parent manages them."
       />
 
-      <SectionCard title="Parent account" subtitle="For guardians who book rides and manage student records.">
+      <SectionCard title="Parent account" subtitle="For guardians who book trips and manage child records.">
         <AppButton label="Register as Parent" onPress={() => navigation.navigate('RegisterParent')} />
       </SectionCard>
 
@@ -22,8 +22,8 @@ export default function RegisterRoleScreen({ navigation }) {
         <AppButton label="Register as Driver" variant="secondary" onPress={() => navigation.navigate('RegisterDriver')} />
       </SectionCard>
 
-      <SectionCard title="Student account policy">
-        <Text>Student accounts are created by the parent inside the app, together with the learner reference number or LRN.</Text>
+      <SectionCard title="Child account policy">
+        <Text>Child accounts are created by the parent inside the app, together with the learner reference number or LRN.</Text>
       </SectionCard>
     </Screen>
   );

@@ -28,14 +28,19 @@ function AppContextBridge({ children }) {
   const addStudent = useCallback((payload) => dispatch(appThunks.addStudent(payload)).unwrap(), [dispatch]);
   const updateStudent = useCallback((studentId, payload) => dispatch(appThunks.updateStudent({ studentId, payload })).unwrap(), [dispatch]);
   const createBooking = useCallback((payload) => dispatch(appThunks.createBooking(payload)).unwrap(), [dispatch]);
-  const approveBooking = useCallback((bookingId) => dispatch(appThunks.approveBooking(bookingId)).unwrap(), [dispatch]);
+  const estimateMonthlyPlan = useCallback((payload) => dispatch(appThunks.estimateMonthlyPlan(payload)).unwrap(), [dispatch]);
+  const payMonthlyPlan = useCallback((payload) => dispatch(appThunks.payMonthlyPlan(payload)).unwrap(), [dispatch]);
+  const updateMonthlyPlan = useCallback((planId, payload) => dispatch(appThunks.updateMonthlyPlan({ planId, payload })).unwrap(), [dispatch]);
+  const cancelMonthlyPlan = useCallback((planId) => dispatch(appThunks.cancelMonthlyPlan(planId)).unwrap(), [dispatch]);
+  const cancelMonthlyPlanDay = useCallback((bookingId, payload) => dispatch(appThunks.cancelMonthlyPlanDay({ bookingId, payload })).unwrap(), [dispatch]);
+  const approveBooking = useCallback((bookingId, options = {}) => dispatch(appThunks.approveBooking({ bookingId, ...options })).unwrap(), [dispatch]);
   const rejectBooking = useCallback((bookingId) => dispatch(appThunks.rejectBooking(bookingId)).unwrap(), [dispatch]);
   const updateDriverAvailability = useCallback((isOnline) => dispatch(appThunks.updateDriverAvailability(isOnline)).unwrap(), [dispatch]);
-  const updateRideStatus = useCallback((status) => dispatch(appThunks.updateRideStatus(status)).unwrap(), [dispatch]);
-  const setTrackingActive = useCallback((isTracking) => dispatch(appActions.setTrackingActive(isTracking)), [dispatch]);
-  const advanceRideSimulation = useCallback(() => dispatch(appActions.advanceRideSimulation()), [dispatch]);
-  const resetRideSimulation = useCallback(() => dispatch(appActions.resetRideSimulation()), [dispatch]);
-  const sendMessage = useCallback((text) => dispatch(appThunks.sendRemoteMessage(text)).unwrap(), [dispatch]);
+  const updateRideStatus = useCallback((status, rideId, payload) => dispatch(appThunks.updateRideStatus({ status, rideId, payload })).unwrap(), [dispatch]);
+  const transferRide = useCallback((rideId, driverId, options = {}) => dispatch(appThunks.transferRide({ rideId, driverId, ...options })).unwrap(), [dispatch]);
+  const pushRideLocation = useCallback((location) => dispatch(appThunks.pushRideLocation(location)).unwrap(), [dispatch]);
+  const trackRide = useCallback((rideId) => dispatch(appThunks.trackRide(rideId)).unwrap(), [dispatch]);
+  const sendMessage = useCallback((payload) => dispatch(appThunks.sendRemoteMessage(payload)).unwrap(), [dispatch]);
 
   const value = useMemo(
     () => ({
@@ -49,13 +54,18 @@ function AppContextBridge({ children }) {
       addStudent,
       updateStudent,
       createBooking,
+      estimateMonthlyPlan,
+      payMonthlyPlan,
+      updateMonthlyPlan,
+      cancelMonthlyPlan,
+      cancelMonthlyPlanDay,
       approveBooking,
       rejectBooking,
       updateDriverAvailability,
       updateRideStatus,
-      setTrackingActive,
-      advanceRideSimulation,
-      resetRideSimulation,
+      transferRide,
+      pushRideLocation,
+      trackRide,
       sendMessage,
     }),
     [
@@ -69,13 +79,18 @@ function AppContextBridge({ children }) {
       addStudent,
       updateStudent,
       createBooking,
+      estimateMonthlyPlan,
+      payMonthlyPlan,
+      updateMonthlyPlan,
+      cancelMonthlyPlan,
+      cancelMonthlyPlanDay,
       approveBooking,
       rejectBooking,
       updateDriverAvailability,
       updateRideStatus,
-      setTrackingActive,
-      advanceRideSimulation,
-      resetRideSimulation,
+      transferRide,
+      pushRideLocation,
+      trackRide,
       sendMessage,
     ]
   );

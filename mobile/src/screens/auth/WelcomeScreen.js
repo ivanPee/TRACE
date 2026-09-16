@@ -1,21 +1,22 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import AppButton from '../../components/AppButton';
 import HeaderBlock from '../../components/HeaderBlock';
 import Screen from '../../components/Screen';
 import { colors } from '../../theme/colors';
+import traceLogo from '../../assets/images/trace-logo.jpg';
 
 export default function WelcomeScreen({ navigation }) {
   return (
     <Screen style={styles.container}>
       <View style={styles.hero}>
-        <Text style={styles.brand}>TRACE</Text>
-        <Text style={styles.tagline}>Track rides, protect students, and keep every parent informed.</Text>
+        <Image source={traceLogo} style={styles.logo} resizeMode="contain" accessibilityLabel="TRACE logo" />
+        <Text style={styles.tagline}>Track trips, protect children, and keep every parent informed.</Text>
       </View>
       <HeaderBlock
-        eyebrow="Student Transport"
-        title="A single app flow for parents, drivers, and students."
-        subtitle="Manage registration, student transport, driver assignments, live status, notifications, and trip coordination."
+        eyebrow="Child Transport"
+        title="A single app flow for parents, drivers, and children."
+        subtitle="Manage registration, child transport, driver assignments, live status, notifications, and trip coordination."
       />
       <AppButton label="Login" onPress={() => navigation.navigate('Login')} />
       <AppButton label="Create an Account" variant="secondary" onPress={() => navigation.navigate('RegisterRole')} />
@@ -30,18 +31,22 @@ const styles = StyleSheet.create({
   hero: {
     backgroundColor: colors.ink,
     borderRadius: 30,
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 22,
     marginBottom: 22,
+    alignItems: 'center',
   },
-  brand: {
-    color: colors.white,
-    fontSize: 42,
-    fontWeight: '900',
-    marginBottom: 8,
+  logo: {
+    width: '100%',
+    maxWidth: 260,
+    height: 190,
+    marginBottom: 10,
+    borderRadius: 18,
   },
   tagline: {
-    color: '#dfe7fd',
+    color: colors.heroText,
     fontSize: 16,
     lineHeight: 24,
+    textAlign: 'center',
   },
 });

@@ -31,8 +31,7 @@ try {
 
         if ($action === 'delete') {
             $pdo->beginTransaction();
-            $pdo->prepare('DELETE FROM parents WHERE id = ?')->execute([(int) post_value('parent_id')]);
-            delete_user_tree((int) post_value('user_id'));
+            delete_parent_tree((int) post_value('parent_id'));
             $pdo->commit();
             flash('success', 'Parent deleted successfully.');
             redirect_to('parents.php');
@@ -66,7 +65,7 @@ admin_header('Parents', 'parents', 'Manage guardian profiles, emergency contacts
     <div class="card-body">
         <div class="table-responsive">
             <table class="table align-middle mb-0">
-                <thead><tr><th>Parent</th><th>Contact</th><th>Address</th><th>Emergency</th><th>Students</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                <thead><tr><th>Parent</th><th>Contact</th><th>Address</th><th>Emergency</th><th>Children</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
                 <tbody>
                     <?php foreach ($parents as $parent): ?>
                         <tr>
@@ -78,7 +77,7 @@ admin_header('Parents', 'parents', 'Manage guardian profiles, emergency contacts
                             <td><span class="badge text-bg-<?= $parent['status'] === 'active' ? 'success' : ($parent['status'] === 'pending' ? 'warning' : 'secondary') ?>"><?= e($parent['status']) ?></span></td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#editParent<?= (int) $parent['id'] ?>"><i class="bi bi-pencil"></i></button>
-                                <form class="d-inline" method="post" data-confirm="Delete this parent? Delete will fail if students or bookings still depend on this record.">
+                                <form class="d-inline" method="post" data-confirm="Delete this parent? Delete will fail if children or bookings still depend on this record.">
                                     <?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="parent_id" value="<?= (int) $parent['id'] ?>"><input type="hidden" name="user_id" value="<?= (int) $parent['user_id'] ?>">
                                     <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
                                 </form>

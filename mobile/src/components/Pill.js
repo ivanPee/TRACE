@@ -19,10 +19,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sky,
   },
   success: {
-    backgroundColor: '#d8f3dc',
+    backgroundColor: colors.accentSoft,
   },
   warning: {
-    backgroundColor: '#fff3cd',
+    backgroundColor: colors.warningSoft,
   },
   text: {
     color: colors.deep,
@@ -30,6 +30,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   warningText: {
-    color: '#7f5539',
+    color: colors.deep,
   },
 });

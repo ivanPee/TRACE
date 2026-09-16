@@ -18,7 +18,9 @@ export default function RegisterDriverScreen({ navigation }) {
     vehiclePlateNumber: '',
     vehicleModel: '',
     vehicleColor: '',
+    vehicleCapacity: '4',
     licensePhoto: null,
+    vehiclePhoto: null,
     vehicleOrcr: null,
     profilePhoto: null,
     password: '',
@@ -28,9 +30,10 @@ export default function RegisterDriverScreen({ navigation }) {
 
   const handleSubmit = async () => {
     const payload = new FormData();
-    ['firstName', 'lastName', 'email', 'mobileNumber', 'licenseNumber', 'vehiclePlateNumber', 'vehicleModel', 'vehicleColor', 'password'].forEach((key) => payload.append(key, form[key]));
+    ['firstName', 'lastName', 'email', 'mobileNumber', 'licenseNumber', 'vehiclePlateNumber', 'vehicleModel', 'vehicleColor', 'vehicleCapacity', 'password'].forEach((key) => payload.append(key, form[key]));
     appendImage(payload, 'profile_photo', form.profilePhoto);
     appendImage(payload, 'license_photo', form.licensePhoto);
+    appendImage(payload, 'vehicle_photo', form.vehiclePhoto);
     appendImage(payload, 'vehicle_orcr', form.vehicleOrcr);
     await registerDriver(payload);
     navigation.reset({
@@ -55,8 +58,10 @@ export default function RegisterDriverScreen({ navigation }) {
         <FormInput label="Vehicle Plate Number" value={form.vehiclePlateNumber} onChangeText={(value) => updateField('vehiclePlateNumber', value)} placeholder="ABC-1234" />
         <FormInput label="Vehicle Model" value={form.vehicleModel} onChangeText={(value) => updateField('vehicleModel', value)} placeholder="Toyota Hiace" />
         <FormInput label="Vehicle Color" value={form.vehicleColor} onChangeText={(value) => updateField('vehicleColor', value)} placeholder="White" />
+        <FormInput label="Vehicle Capacity" value={form.vehicleCapacity} onChangeText={(value) => updateField('vehicleCapacity', value.replace(/[^0-9]/g, ''))} placeholder="4" keyboardType="number-pad" />
         <ImagePickerField label="Profile Image" value={form.profilePhoto} onChange={(value) => updateField('profilePhoto', value)} />
         <ImagePickerField label="Driver License Image" value={form.licensePhoto} onChange={(value) => updateField('licensePhoto', value)} />
+        <ImagePickerField label="Vehicle Photo" value={form.vehiclePhoto} onChange={(value) => updateField('vehiclePhoto', value)} />
         <ImagePickerField label="Vehicle ORCR Image" value={form.vehicleOrcr} onChange={(value) => updateField('vehicleOrcr', value)} />
         <FormInput label="Password" value={form.password} onChangeText={(value) => updateField('password', value)} placeholder="Password" secureTextEntry />
         <AppButton label="Create Driver Account" variant="secondary" onPress={handleSubmit} />

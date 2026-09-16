@@ -28,5 +28,12 @@ if (!is_dir($config['upload_path'])) {
     mkdir($config['upload_path'], 0777, true);
 }
 
-require __DIR__ . '/routes/api.php';
+try {
+    require __DIR__ . '/routes/api.php';
+} catch (Throwable $exception) {
+    \Core\Response::json([
+        'success' => false,
+        'message' => 'Server error: ' . $exception->getMessage(),
+    ], 500);
+}
 

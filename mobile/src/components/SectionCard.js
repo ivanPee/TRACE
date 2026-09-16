@@ -1,13 +1,21 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { colors } from '../theme/colors';
 
-export default function SectionCard({ title, subtitle, children, tone = 'default' }) {
+export default function SectionCard({ title, subtitle, children, tone = 'default', icon, style }) {
   return (
-    <View style={[styles.card, tone === 'soft' ? styles.soft : null]}>
+    <View style={[styles.card, tone === 'soft' ? styles.soft : null, style]}>
       {(title || subtitle) && (
         <View style={styles.header}>
-          {title ? <Text style={styles.title}>{title}</Text> : null}
+          <View style={styles.titleRow}>
+            {icon ? (
+              <View style={styles.iconWrap}>
+                <FontAwesome5 name={icon} size={14} solid color={colors.accent} />
+              </View>
+            ) : null}
+            {title ? <Text style={styles.title}>{title}</Text> : null}
+          </View>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
       )}
@@ -23,7 +31,7 @@ const styles = StyleSheet.create({
     padding: 18,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#ececec',
+    borderColor: colors.line,
   },
   soft: {
     backgroundColor: colors.sky,
@@ -31,7 +39,21 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 12,
   },
+  titleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  iconWrap: {
+    alignItems: 'center',
+    backgroundColor: colors.accentSoft,
+    borderRadius: 10,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
+  },
   title: {
+    flex: 1,
     fontSize: 18,
     fontWeight: '800',
     color: colors.ink,

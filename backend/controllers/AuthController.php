@@ -18,13 +18,16 @@ class AuthController extends ApiController
             $validIdPath = $this->storeUpload('valid_id', 'parents')
                 ?: $this->storeBase64Upload((string) ($input['valid_id_base64'] ?? $input['validIdBase64'] ?? ''), 'parents', 'valid-id.jpg')
                 ?: ($input['valid_id_path'] ?? $input['validIdPath'] ?? null);
+            $coordinate = static fn ($value) => trim((string) $value) === '' ? null : (float) $value;
             $stmt = $this->pdo->prepare(
-                'INSERT INTO parents (user_id, address, valid_id_path, emergency_contact_name, emergency_contact_number)
-                 VALUES (?, ?, ?, ?, ?)'
+                'INSERT INTO parents (user_id, address, address_latitude, address_longitude, valid_id_path, emergency_contact_name, emergency_contact_number)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)'
             );
             $stmt->execute([
                 $userId,
                 $input['address'] ?? '',
+                $coordinate($input['address_latitude'] ?? $input['addressLatitude'] ?? null),
+                $coordinate($input['address_longitude'] ?? $input['addressLongitude'] ?? null),
                 $validIdPath,
                 $input['emergency_contact_name'] ?? $input['emergencyContactName'] ?? 'Emergency contact',
                 $input['emergency_contact_number'] ?? $input['emergencyContactNumber'] ?? ($input['mobile_number'] ?? $input['mobileNumber'] ?? ''),
@@ -55,9 +58,12 @@ class AuthController extends ApiController
             $licensePhotoPath = $this->storeUpload('license_photo', 'drivers')
                 ?: $this->storeBase64Upload((string) ($input['license_photo_base64'] ?? $input['licensePhotoBase64'] ?? ''), 'drivers', 'license.jpg')
                 ?: ($input['license_photo_path'] ?? $input['licensePhotoPath'] ?? 'pending-upload');
+            $vehiclePhotoPath = $this->storeUpload('vehicle_photo', 'vehicles')
+                ?: $this->storeBase64Upload((string) ($input['vehicle_photo_base64'] ?? $input['vehiclePhotoBase64'] ?? ''), 'vehicles', 'vehicle-photo.jpg')
+                ?: ($input['vehicle_photo_path'] ?? $input['vehiclePhotoPath'] ?? null);
             $orcrPath = $this->storeUpload('vehicle_orcr', 'vehicles')
                 ?: $this->storeBase64Upload((string) ($input['vehicle_orcr_base64'] ?? $input['vehicleOrcrBase64'] ?? ''), 'vehicles', 'orcr.jpg')
-                ?: ($input['vehicle_photo_path'] ?? $input['vehiclePhotoPath'] ?? null);
+                ?: ($input['vehicle_orcr_path'] ?? $input['vehicleOrcrPath'] ?? null);
             $stmt = $this->pdo->prepare(
                 'INSERT INTO drivers (user_id, license_number, license_expiry, license_photo_path, vehicle_type, vehicle_plate_number, vehicle_model, vehicle_color, vehicle_photo_path, approval_status)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
@@ -71,9 +77,11 @@ class AuthController extends ApiController
                 $input['vehicle_plate_number'] ?? $input['vehiclePlateNumber'] ?? '',
                 $input['vehicle_model'] ?? $input['vehicleModel'] ?? '',
                 $input['vehicle_color'] ?? $input['vehicleColor'] ?? 'Unspecified',
-                $orcrPath,
+                $vehiclePhotoPath,
                 'pending',
             ]);
+            $driverId = (int) $this->pdo->lastInsertId();
+            $this->syncVehicleRecord($driverId, $input, $orcrPath);
             $this->pdo->commit();
             $user = $this->findUser($userId);
 
@@ -163,9 +171,12 @@ class AuthController extends ApiController
             if ($user['role_code'] === 'parent') {
                 $validIdPath = $this->storeUpload('valid_id', 'parents')
                     ?: $this->storeBase64Upload((string) ($input['valid_id_base64'] ?? $input['validIdBase64'] ?? ''), 'parents', 'valid-id.jpg');
-                $parentFields = ['address = ?', 'emergency_contact_name = ?', 'emergency_contact_number = ?'];
+                $coordinate = static fn ($value) => trim((string) $value) === '' ? null : (float) $value;
+                $parentFields = ['address = ?', 'address_latitude = ?', 'address_longitude = ?', 'emergency_contact_name = ?', 'emergency_contact_number = ?'];
                 $parentParams = [
                     $input['address'] ?? '',
+                    $coordinate($input['address_latitude'] ?? $input['addressLatitude'] ?? null),
+                    $coordinate($input['address_longitude'] ?? $input['addressLongitude'] ?? null),
                     $input['emergency_contact_name'] ?? $input['emergencyContactName'] ?? 'Emergency contact',
                     $input['emergency_contact_number'] ?? $input['emergencyContactNumber'] ?? ($input['mobile_number'] ?? $input['mobileNumber'] ?? ''),
                 ];
@@ -182,12 +193,15 @@ class AuthController extends ApiController
             if ($user['role_code'] === 'driver') {
                 $licensePhotoPath = $this->storeUpload('license_photo', 'drivers')
                     ?: $this->storeBase64Upload((string) ($input['license_photo_base64'] ?? $input['licensePhotoBase64'] ?? ''), 'drivers', 'license.jpg');
+                $vehiclePhotoPath = $this->storeUpload('vehicle_photo', 'vehicles')
+                    ?: $this->storeBase64Upload((string) ($input['vehicle_photo_base64'] ?? $input['vehiclePhotoBase64'] ?? ''), 'vehicles', 'vehicle-photo.jpg');
                 $orcrPath = $this->storeUpload('vehicle_orcr', 'vehicles')
                     ?: $this->storeBase64Upload((string) ($input['vehicle_orcr_base64'] ?? $input['vehicleOrcrBase64'] ?? ''), 'vehicles', 'orcr.jpg');
-                $driverFields = ['license_number = ?', 'license_expiry = ?', 'vehicle_plate_number = ?', 'vehicle_model = ?', 'vehicle_color = ?'];
+                $driverFields = ['license_number = ?', 'license_expiry = ?', 'vehicle_type = ?', 'vehicle_plate_number = ?', 'vehicle_model = ?', 'vehicle_color = ?'];
                 $driverParams = [
                     $input['license_number'] ?? $input['licenseNumber'] ?? '',
                     $input['license_expiry'] ?? $input['licenseExpiry'] ?? date('Y-m-d', strtotime('+1 year')),
+                    $input['vehicle_type'] ?? $input['vehicleType'] ?? 'School Service',
                     $input['vehicle_plate_number'] ?? $input['vehiclePlateNumber'] ?? '',
                     $input['vehicle_model'] ?? $input['vehicleModel'] ?? '',
                     $input['vehicle_color'] ?? $input['vehicleColor'] ?? 'Unspecified',
@@ -198,13 +212,55 @@ class AuthController extends ApiController
                     $driverParams[] = $licensePhotoPath;
                 }
 
-                if ($orcrPath) {
+                if ($vehiclePhotoPath) {
                     $driverFields[] = 'vehicle_photo_path = ?';
-                    $driverParams[] = $orcrPath;
+                    $driverParams[] = $vehiclePhotoPath;
                 }
 
                 $driverParams[] = (int) $user['id'];
                 $this->pdo->prepare('UPDATE drivers SET ' . implode(', ', $driverFields) . ' WHERE user_id = ?')->execute($driverParams);
+
+                $driver = $this->pdo->prepare('SELECT id FROM drivers WHERE user_id = ? LIMIT 1');
+                $driver->execute([(int) $user['id']]);
+                $driverId = (int) $driver->fetchColumn();
+
+                if ($driverId > 0) {
+                    $this->syncVehicleRecord($driverId, $input, $orcrPath);
+                }
+            }
+
+            if ($user['role_code'] === 'student') {
+                $studentStmt = $this->pdo->prepare('SELECT * FROM students WHERE user_id = ? LIMIT 1');
+                $studentStmt->execute([(int) $user['id']]);
+                $student = $studentStmt->fetch() ?: [];
+                $coordinate = static fn ($value) => trim((string) $value) === '' ? null : (float) $value;
+                $studentFields = [
+                    'lrn = ?',
+                    'school_name = ?',
+                    'grade_level = ?',
+                    'pickup_address = ?',
+                    'pickup_latitude = ?',
+                    'pickup_longitude = ?',
+                    'dropoff_address = ?',
+                    'dropoff_latitude = ?',
+                    'dropoff_longitude = ?',
+                    'medical_notes = ?',
+                ];
+                $studentParams = [
+                    $input['lrn'] ?? $student['lrn'] ?? '',
+                    $input['school_name'] ?? $input['schoolName'] ?? $student['school_name'] ?? '',
+                    $input['grade_level'] ?? $input['gradeLevel'] ?? $student['grade_level'] ?? '',
+                    $input['pickup_address'] ?? $input['pickupAddress'] ?? $student['pickup_address'] ?? '',
+                    $coordinate($input['pickup_latitude'] ?? $input['pickupLatitude'] ?? $student['pickup_latitude'] ?? null),
+                    $coordinate($input['pickup_longitude'] ?? $input['pickupLongitude'] ?? $student['pickup_longitude'] ?? null),
+                    $input['dropoff_address'] ?? $input['dropoffAddress'] ?? $student['dropoff_address'] ?? '',
+                    $coordinate($input['dropoff_latitude'] ?? $input['dropoffLatitude'] ?? $student['dropoff_latitude'] ?? null),
+                    $coordinate($input['dropoff_longitude'] ?? $input['dropoffLongitude'] ?? $student['dropoff_longitude'] ?? null),
+                    $input['medical_notes'] ?? $input['notes'] ?? $student['medical_notes'] ?? null,
+                    (int) $user['id'],
+                ];
+
+                $this->pdo->prepare('UPDATE students SET ' . implode(', ', $studentFields) . ' WHERE user_id = ?')->execute($studentParams);
             }
 
             $this->notifyUser((int) $user['id'], 'Profile updated', 'Your account details were updated successfully.', 'profile', (int) $user['id']);

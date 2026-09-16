@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
   eyebrow: {
     color: colors.accent,
     fontWeight: '800',
-    letterSpacing: 0.8,
+    letterSpacing: 0,
     textTransform: 'uppercase',
     marginBottom: 6,
   },

@@ -9,6 +9,9 @@ const iconByKey = {
   home: 'home',
   students: 'child',
   bookings: 'comment-dots',
+  plans: 'calendar-check',
+  'calendar-plus': 'calendar-plus',
+  route: 'route',
   transactions: 'history',
   profile: 'user-circle',
   ride: 'route',
@@ -44,7 +47,7 @@ export default function AppNavBar({ navigation, active, onTabPress }) {
             >
               <View style={[styles.iconWrap, isActive && styles.activeIconWrap]}>
                 <FontAwesome5
-                  name={iconByKey[item.key] || 'circle'}
+                  name={iconByKey[item.icon] || iconByKey[item.key] || 'circle'}
                   size={isActive ? 16 : 15}
                   solid={isActive}
                   color={isActive ? colors.white : styles.inactiveIcon.color}
@@ -66,15 +69,15 @@ const styles = StyleSheet.create({
   },
   bar: {
     minHeight: 56,
-    backgroundColor: '#1a1d21',
+    backgroundColor: colors.ink,
     borderTopWidth: 1,
-    borderTopColor: '#25292e',
+    borderTopColor: colors.deep,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 6,
     paddingVertical: 4,
-    shadowColor: '#000000',
+    shadowColor: colors.shadow,
     shadowOpacity: 0.1,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: -2 },
@@ -102,6 +105,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   inactiveIcon: {
-    color: 'rgba(255,255,255,0.60)',
+    color: colors.navMuted,
   },
 });

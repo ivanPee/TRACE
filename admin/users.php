@@ -58,6 +58,7 @@ admin_header('Users', 'users', 'Create, update, verify, suspend, and delete syst
             <table class="table align-middle mb-0">
                 <thead>
                     <tr>
+                        <th>Photo</th>
                         <th>Name</th>
                         <th>Role</th>
                         <th>Email</th>
@@ -70,6 +71,13 @@ admin_header('Users', 'users', 'Create, update, verify, suspend, and delete syst
                 <tbody>
                     <?php foreach ($users as $user): ?>
                         <tr>
+                            <td>
+                                <?php if (asset_url($user['profile_photo'] ?? null)): ?>
+                                    <img class="media-thumb" src="<?= e(asset_url($user['profile_photo'])) ?>" alt="<?= e(full_name($user)) ?>">
+                                <?php else: ?>
+                                    <span class="text-secondary small">No photo</span>
+                                <?php endif; ?>
+                            </td>
                             <td class="fw-semibold"><?= e(full_name($user)) ?></td>
                             <td><?= e($user['role_name']) ?></td>
                             <td><?= e($user['email']) ?></td>
@@ -90,7 +98,7 @@ admin_header('Users', 'users', 'Create, update, verify, suspend, and delete syst
                         </tr>
                     <?php endforeach; ?>
                     <?php if (!$users): ?>
-                        <tr><td colspan="7" class="text-center text-secondary py-4">No users yet.</td></tr>
+                        <tr><td colspan="8" class="text-center text-secondary py-4">No users yet.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

@@ -14,7 +14,7 @@ export default function FormInput({ label, value, onChangeText, placeholder, mul
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         style={[styles.input, multiline ? styles.multiline : null]}
-        placeholderTextColor="#98a2b3"
+        placeholderTextColor={colors.placeholder}
       />
     </View>
   );

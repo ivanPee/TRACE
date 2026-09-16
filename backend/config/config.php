@@ -2,7 +2,7 @@
 
 return [
     'app_name' => 'TRACE API',
-    'base_url' => 'http://localhost/trace/TRACE/backend',
+    'base_url' => '',
     'db' => [
         'host' => '127.0.0.1',
         'port' => 3306,
